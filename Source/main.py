@@ -38,16 +38,95 @@ class Pacman:
         self.radius = radius
         self.direction = direction
     
-    def update(self):
-        if (self.direction == "UP"):    self.display_y -= PACMAN_SPEED
-        if (self.direction == "DOWN"):  self.display_y += PACMAN_SPEED
-        if (self.direction == "LEFT"):  self.display_x -= PACMAN_SPEED
-        if (self.direction == "RIGHT"): self.display_x += PACMAN_SPEED
+    def snapDisplayToGrid(self):
+        self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - self.radius + 3
+        self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - self.radius + 9
 
-        if (pacman.display_x < SCREEN_OFFSET): pacman.display_x = SCREEN_WIDTH - SCREEN_OFFSET
-        if (pacman.display_x > SCREEN_WIDTH):  pacman.display_x = SCREEN_OFFSET
-        if (pacman.display_y < SCREEN_OFFSET): pacman.display_y = SCREEN_HEIGHT - SCREEN_OFFSET
-        if (pacman.display_y > SCREEN_HEIGHT): pacman.display_y = SCREEN_OFFSET
+    def checkObstructionDirection(self, tile_map, direction):
+        OFFSET = 1
+        if (direction == "UP"):
+            if (tile_map[self.y - OFFSET][self.x] != -1):
+                return True
+        if (direction == "DOWN"):
+            if (tile_map[self.y + OFFSET][self.x] != -1):
+                return True
+        if (direction == "LEFT"):
+            if (tile_map[self.y][self.x - OFFSET] != -1):
+                return True
+        if (direction == "RIGHT"):
+            if (tile_map[self.y][self.x + OFFSET] != -1):
+                return True
+
+        return False
+    
+    def moveInDirection(self, tile_map, direction):
+        if(direction == "UP" and self.direction == "DOWN"): return False
+        if(direction == "DOWN" and self.direction == "UP"): return False
+        if(direction == "LEFT" and self.direction == "RIGHT"): return False
+        if(direction == "RIGHT" and self.direction == "LEFT"): return False
+
+        if (direction == "UP"):
+            if(self.checkObstructionDirection(tile_map, "UP") == False):
+                return True
+            else:   return False
+        
+        if (direction == "DOWN"):
+            if(self.checkObstructionDirection(tile_map, "DOWN") == False):
+                return True
+            else:   return False
+
+        if (direction == "LEFT"):
+            if(self.checkObstructionDirection(tile_map, "LEFT") == False):
+                return True
+            else:   return False
+
+        if (direction == "RIGHT"):
+            if(self.checkObstructionDirection(tile_map, "RIGHT") == False):
+                return True
+            else:   return False
+
+    def update(self, tile_map):
+        DEBUG = False
+        if (DEBUG): return
+
+        print("X: " + str(self.x) + " Y: " + str(self.y) + " | Tile map value: " +
+              str(tile_map[self.y][self.x]) + " | Direction: " + self.direction +
+                " | Obstruction: " + str(self.checkObstructionDirection(tile_map, self.direction)))
+
+        if (self.checkObstructionDirection(tile_map, self.direction)):
+            self.direction = "NONE"
+            return
+
+        VERTICAL_OFFSET = 6
+        HORIZONTAL_OFFSET = 2
+
+        if (self.direction == "UP"):    
+            self.display_y -= PACMAN_SPEED
+            if(self.display_y / TILE_SIZE < self.y and self.display_y % TILE_SIZE == VERTICAL_OFFSET):    
+                self.y -= 1
+                self.snapDisplayToGrid()
+        if (self.direction == "DOWN"):  
+            self.display_y += PACMAN_SPEED
+            if(self.display_y / TILE_SIZE > self.y and self.display_y % TILE_SIZE == VERTICAL_OFFSET):    
+                self.y += 1 
+                self.snapDisplayToGrid()
+        if (self.direction == "LEFT"):  
+            self.display_x -= PACMAN_SPEED
+            if(self.display_x / TILE_SIZE < self.x and self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):    
+                self.x -= 1
+                self.snapDisplayToGrid()
+        if (self.direction == "RIGHT"): 
+            self.display_x += PACMAN_SPEED
+            if(self.display_x / TILE_SIZE > self.x and self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):   
+                self.x += 1  
+                self.snapDisplayToGrid()
+
+        if (self.display_x < SCREEN_OFFSET + self.radius): 
+            self.display_x = SCREEN_WIDTH - SCREEN_OFFSET
+            self.x = MAP_WIDTH
+        if (self.display_x > SCREEN_WIDTH):  
+            self.display_x = SCREEN_OFFSET + SCREEN_OFFSET
+            self.x = 2
     
     def render(self, screen):
         pygame.draw.circle(screen, "yellow", (self.display_x, self.display_y - self.radius + 5), PACMAN_RADIUS)
@@ -81,7 +160,7 @@ screen = pygame.display.set_mode((SCREEN_WIDTH + SCREEN_OFFSET * 2, SCREEN_HEIGH
 clock = pygame.time.Clock()
 running = True
 
-pacman = Pacman(15, 28, PACMAN_RADIUS, "NONE")
+pacman = Pacman(2, 6, PACMAN_RADIUS, "NONE")
 tilemap = Tilemap("Resource/map/map.png")
 
 while running:
@@ -95,17 +174,17 @@ while running:
             if (event.key == pygame.constants.K_ESCAPE):
                 running = False
 
-            if (event.key == pygame.constants.K_UP):
-                pacman.direction = "UP"
-            if (event.key == pygame.constants.K_DOWN):
-                pacman.direction = "DOWN"
-            if (event.key == pygame.constants.K_LEFT):
-                pacman.direction = "LEFT"
-            if (event.key == pygame.constants.K_RIGHT):
-                pacman.direction = "RIGHT"
+            if (event.key == pygame.constants.K_UP and pacman.moveInDirection(tilemap.tilemap, "UP")):
+                    pacman.direction = "UP"
+            if (event.key == pygame.constants.K_DOWN and pacman.moveInDirection(tilemap.tilemap, "DOWN")):
+                    pacman.direction = "DOWN"
+            if (event.key == pygame.constants.K_LEFT and pacman.moveInDirection(tilemap.tilemap, "LEFT")):
+                    pacman.direction = "LEFT"
+            if (event.key == pygame.constants.K_RIGHT and pacman.moveInDirection(tilemap.tilemap, "RIGHT")):
+                    pacman.direction = "RIGHT"
 
     # update
-    pacman.update()
+    pacman.update(tilemap.tilemap)
 
     # fill the screen with a color to wipe away anything from last frame
     screen.fill("black")
@@ -116,6 +195,7 @@ while running:
     # flip() the display to put your work on screen
     pygame.display.flip()
 
-    clock.tick(60)  # limits FPS to 60
+    FPS = 60
+    clock.tick(FPS) 
 
 pygame.quit()

@@ -1,6 +1,20 @@
 # Example file showing a basic pygame "game loop"
 import pygame
 
+# Load PNGS
+frame1UP = pygame.image.load("Resource\\pacman-up\\1.png")
+frame2UP = pygame.image.load("Resource\\pacman-up\\2.png")
+frame3UP = pygame.image.load("Resource\\pacman-up\\3.png")
+frame1DOWN = pygame.image.load("Resource\\pacman-down\\1.png")
+frame2DOWN = pygame.image.load("Resource\\pacman-down\\2.png")
+frame3DOWN = pygame.image.load("Resource\\pacman-down\\3.png")
+frame1LEFT = pygame.image.load("Resource\\pacman-left\\1.png")
+frame2LEFT = pygame.image.load("Resource\\pacman-left\\2.png")
+frame3LEFT = pygame.image.load("Resource\\pacman-left\\3.png")
+frame1RIGHT = pygame.image.load("Resource\\pacman-right\\1.png")
+frame2RIGHT = pygame.image.load("Resource\\pacman-right\\2.png")
+frame3RIGHT = pygame.image.load("Resource\\pacman-right\\3.png")
+
 # pygame setup
 TILE_RESU = 8   # Tile size in .png
 TILE_SIZE = 16  # Tile size to render
@@ -31,6 +45,7 @@ def ReadMap():
 
 class Pacman:
     def __init__(self, x, y, radius, direction):
+        self.frame_counter = 0
         self.x = x
         self.y = y
         self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - radius + 3
@@ -60,10 +75,10 @@ class Pacman:
         return False
     
     def moveInDirection(self, tile_map, direction):
-        if(direction == "UP" and self.direction == "DOWN"): return False
-        if(direction == "DOWN" and self.direction == "UP"): return False
-        if(direction == "LEFT" and self.direction == "RIGHT"): return False
-        if(direction == "RIGHT" and self.direction == "LEFT"): return False
+        if(direction == "UP" and self.direction == "DOWN" and self.checkObstructionDirection(tile_map, "DOWN") == False): return False
+        if(direction == "DOWN" and self.direction == "UP" and self.checkObstructionDirection(tile_map, "UP") == False): return False
+        if(direction == "LEFT" and self.direction == "RIGHT" and self.checkObstructionDirection(tile_map, "RIGHT") == False): return False
+        if(direction == "RIGHT" and self.direction == "LEFT" and self.checkObstructionDirection(tile_map, "LEFT") == False): return False
 
         if (direction == "UP"):
             if(self.checkObstructionDirection(tile_map, "UP") == False):
@@ -94,7 +109,6 @@ class Pacman:
                 " | Obstruction: " + str(self.checkObstructionDirection(tile_map, self.direction)))
 
         if (self.checkObstructionDirection(tile_map, self.direction)):
-            self.direction = "NONE"
             return
 
         VERTICAL_OFFSET = 6
@@ -129,7 +143,38 @@ class Pacman:
             self.x = 2
     
     def render(self, screen):
-        pygame.draw.circle(screen, "yellow", (self.display_x, self.display_y - self.radius + 5), PACMAN_RADIUS)
+
+        frames = [[
+                frame1UP, frame2UP, frame3UP
+            ], [
+                frame1DOWN, frame2DOWN, frame3DOWN
+            ], [
+                frame1LEFT, frame2LEFT, frame3LEFT
+            ], [
+                frame1RIGHT, frame2RIGHT, frame3RIGHT
+            ]
+        ]
+
+        direction_mapping = {
+            "UP": 0,
+            "DOWN": 1,
+            "LEFT": 2,
+            "RIGHT": 3,
+            "NONE" : 1
+        }
+
+        if(self.frame_counter == 0): #draw 2nd frame
+            screen.blit(frames[direction_mapping[self.direction]][0], (self.display_x - PACMAN_RADIUS, self.display_y - PACMAN_RADIUS))
+            if(self.checkObstructionDirection(tilemap.tilemap, self.direction) == False):   self.frame_counter = 1
+            return
+        if(self.frame_counter == 1):
+            screen.blit(frames[direction_mapping[self.direction]][1], (self.display_x - PACMAN_RADIUS, self.display_y - PACMAN_RADIUS))
+            if(self.checkObstructionDirection(tilemap.tilemap, self.direction) == False):   self.frame_counter = 2
+            return
+        if(self.frame_counter == 2):
+            screen.blit(frames[direction_mapping[self.direction]][2], (self.display_x - PACMAN_RADIUS, self.display_y - PACMAN_RADIUS))
+            if(self.checkObstructionDirection(tilemap.tilemap, self.direction) == False):   self.frame_counter = 0
+            return
 
 class Tilemap:
     def __init__(self, filename):

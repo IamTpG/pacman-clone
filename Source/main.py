@@ -3,7 +3,7 @@ import pygame
 
 # pygame setup
 TILE_RESU = 8   # Tile size in .png
-TILE_SIZE = 20  # Tile size to render
+TILE_SIZE = 16  # Tile size to render
 
 MAP_WIDTH  = 29
 MAP_HEIGHT = 37
@@ -12,12 +12,12 @@ SCREEN_OFFSET = 10
 SCREEN_WIDTH  = MAP_WIDTH  * TILE_SIZE
 SCREEN_HEIGHT = MAP_HEIGHT * TILE_SIZE
 
-PACMAN_SPEED  = 3
+PACMAN_SPEED  = 2
 PACMAN_RADIUS = TILE_SIZE - 5
 
 # Utils function for reading tilemap
 def ReadMap():
-    file = open("D:/06_Program Files/Github/pacman-clone/Resource/map/map.txt")
+    file = open("Resource/map/map.txt")
     m = [[0] * MAP_WIDTH]
 
     for i in range(1, MAP_HEIGHT + 1):
@@ -33,8 +33,8 @@ class Pacman:
     def __init__(self, x, y, radius, direction):
         self.x = x
         self.y = y
-        self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - radius + 5
-        self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - radius + 15
+        self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - radius + 3
+        self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - radius + 9
         self.radius = radius
         self.direction = direction
     
@@ -44,10 +44,10 @@ class Pacman:
         if (self.direction == "LEFT"):  self.display_x -= PACMAN_SPEED
         if (self.direction == "RIGHT"): self.display_x += PACMAN_SPEED
 
-        if (pacman.display_x < 0): pacman.display_x = SCREEN_WIDTH
-        if (pacman.display_x > SCREEN_WIDTH): pacman.display_x = 0
-        if (pacman.display_y < 0): pacman.display_y = SCREEN_HEIGHT
-        if (pacman.display_y > SCREEN_HEIGHT): pacman.display_y = 0
+        if (pacman.display_x < SCREEN_OFFSET): pacman.display_x = SCREEN_WIDTH - SCREEN_OFFSET
+        if (pacman.display_x > SCREEN_WIDTH):  pacman.display_x = SCREEN_OFFSET
+        if (pacman.display_y < SCREEN_OFFSET): pacman.display_y = SCREEN_HEIGHT - SCREEN_OFFSET
+        if (pacman.display_y > SCREEN_HEIGHT): pacman.display_y = SCREEN_OFFSET
     
     def render(self, screen):
         pygame.draw.circle(screen, "yellow", (self.display_x, self.display_y - self.radius + 5), PACMAN_RADIUS)
@@ -82,7 +82,7 @@ clock = pygame.time.Clock()
 running = True
 
 pacman = Pacman(15, 28, PACMAN_RADIUS, "NONE")
-tilemap = Tilemap("D://06_Program Files//Github//pacman-clone//Resource//map//map.png")
+tilemap = Tilemap("Resource/map/map.png")
 
 while running:
     # poll for events

@@ -1,19 +1,6 @@
 # Example file showing a basic pygame "game loop"
 import pygame
-
-# Load PNGS
-frame1UP = pygame.image.load("Resource\\pacman-up\\1.png")
-frame2UP = pygame.image.load("Resource\\pacman-up\\2.png")
-frame3UP = pygame.image.load("Resource\\pacman-up\\3.png")
-frame1DOWN = pygame.image.load("Resource\\pacman-down\\1.png")
-frame2DOWN = pygame.image.load("Resource\\pacman-down\\2.png")
-frame3DOWN = pygame.image.load("Resource\\pacman-down\\3.png")
-frame1LEFT = pygame.image.load("Resource\\pacman-left\\1.png")
-frame2LEFT = pygame.image.load("Resource\\pacman-left\\2.png")
-frame3LEFT = pygame.image.load("Resource\\pacman-left\\3.png")
-frame1RIGHT = pygame.image.load("Resource\\pacman-right\\1.png")
-frame2RIGHT = pygame.image.load("Resource\\pacman-right\\2.png")
-frame3RIGHT = pygame.image.load("Resource\\pacman-right\\3.png")
+import random
 
 # pygame setup
 TILE_RESU = 8   # Tile size in .png
@@ -29,6 +16,9 @@ SCREEN_HEIGHT = MAP_HEIGHT * TILE_SIZE
 PACMAN_SPEED  = 2
 PACMAN_RADIUS = TILE_SIZE - 5
 
+GHOST_SPEED = 1
+GHOST_RADIUS = TILE_SIZE - 5
+
 # Utils function for reading tilemap
 def ReadMap():
     file = open("Resource/map/map.txt")
@@ -43,19 +33,87 @@ def ReadMap():
     file.close()
     return m
 
+def loadPacmanFrames():
+    frame1UP = pygame.image.load("Resource\\pacman-up\\1.png")
+    frame2UP = pygame.image.load("Resource\\pacman-up\\2.png")
+    frame3UP = pygame.image.load("Resource\\pacman-up\\3.png")
+    frame1DOWN = pygame.image.load("Resource\\pacman-down\\1.png")
+    frame2DOWN = pygame.image.load("Resource\\pacman-down\\2.png")
+    frame3DOWN = pygame.image.load("Resource\\pacman-down\\3.png")
+    frame1LEFT = pygame.image.load("Resource\\pacman-left\\1.png")
+    frame2LEFT = pygame.image.load("Resource\\pacman-left\\2.png")
+    frame3LEFT = pygame.image.load("Resource\\pacman-left\\3.png")
+    frame1RIGHT = pygame.image.load("Resource\\pacman-right\\1.png")
+    frame2RIGHT = pygame.image.load("Resource\\pacman-right\\2.png")
+    frame3RIGHT = pygame.image.load("Resource\\pacman-right\\3.png")
+
+    frames = [[
+                frame1UP, frame2UP, frame3UP
+            ], [
+                frame1DOWN, frame2DOWN, frame3DOWN
+            ], [
+                frame1LEFT, frame2LEFT, frame3LEFT
+            ], [
+                frame1RIGHT, frame2RIGHT, frame3RIGHT
+            ]
+        ]
+
+    SCALING_FACTOR = 2
+    
+    for i in range(4):
+        for j in range(3):
+            frames[i][j] = pygame.transform.scale(frames[i][j], (PACMAN_RADIUS * SCALING_FACTOR, PACMAN_RADIUS * SCALING_FACTOR))
+
+    return frames
+
+def loadGhostFrames(name):
+    blinky = pygame.image.load("Resource/ghosts/blinky.png")
+    inky = pygame.image.load("Resource/ghosts/inky.png")
+    pinky = pygame.image.load("Resource/ghosts/pinky.png")
+    clyde = pygame.image.load("Resource/ghosts/clyde.png")
+    blue_ghost = pygame.image.load("Resource/ghosts/blue_ghost.png")
+
+    if name == "blinky":
+        frames = [blinky, blue_ghost]
+    elif name == "inky":
+        frames = [inky, blue_ghost]
+    elif name == "pinky":
+        frames = [pinky, blue_ghost]
+    elif name == "clyde":
+        frames = [clyde, blue_ghost]
+
+    SCALING_FACTOR = 2
+    for i in range(2):
+        frames[i] = pygame.transform.scale(frames[i], (GHOST_RADIUS * SCALING_FACTOR, GHOST_RADIUS * SCALING_FACTOR))
+
+    return frames
+
+
 class Pacman:
     def __init__(self, x, y, radius, direction):
+        # animation
+        self.frames = loadPacmanFrames()
         self.frame_counter = 0
+
+        # lock turning 
+        self.lock_turn_time = 0
+
+        # save the next turn and time before it is reset
+        self.queue_turn = "NONE"
+        self.MAX_QUEUE_TIME = 3
+        self.queue_time = self.MAX_QUEUE_TIME
+
+        # position 
         self.x = x
         self.y = y
         self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - radius + 3
-        self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - radius + 9
+        self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - radius + 4
         self.radius = radius
         self.direction = direction
     
     def snapDisplayToGrid(self):
         self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - self.radius + 3
-        self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - self.radius + 9
+        self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - self.radius + 4
 
     def checkObstructionDirection(self, tile_map, direction):
         OFFSET = 1
@@ -72,89 +130,74 @@ class Pacman:
             if (tile_map[self.y][self.x + OFFSET] != -1):
                 return True
 
-        return False
     
-    def moveInDirection(self, tile_map, direction):
-        if(direction == "UP" and self.direction == "DOWN" and self.checkObstructionDirection(tile_map, "DOWN") == False): return False
-        if(direction == "DOWN" and self.direction == "UP" and self.checkObstructionDirection(tile_map, "UP") == False): return False
-        if(direction == "LEFT" and self.direction == "RIGHT" and self.checkObstructionDirection(tile_map, "RIGHT") == False): return False
-        if(direction == "RIGHT" and self.direction == "LEFT" and self.checkObstructionDirection(tile_map, "LEFT") == False): return False
-
-        if (direction == "UP"):
-            if(self.checkObstructionDirection(tile_map, "UP") == False):
-                return True
-            else:   return False
+    def canTurn(self, tile_map, wanted_direction):
+        if wanted_direction == "NONE":
+            return False
         
-        if (direction == "DOWN"):
-            if(self.checkObstructionDirection(tile_map, "DOWN") == False):
-                return True
-            else:   return False
+        if wanted_direction == self.direction:
+            return False
 
-        if (direction == "LEFT"):
-            if(self.checkObstructionDirection(tile_map, "LEFT") == False):
-                return True
-            else:   return False
-
-        if (direction == "RIGHT"):
-            if(self.checkObstructionDirection(tile_map, "RIGHT") == False):
-                return True
-            else:   return False
+        return not self.checkObstructionDirection(tile_map, wanted_direction)
 
     def update(self, tile_map):
-        DEBUG = False
-        if (DEBUG): return
-
-        print("X: " + str(self.x) + " Y: " + str(self.y) + " | Tile map value: " +
-              str(tile_map[self.y][self.x]) + " | Direction: " + self.direction +
+        DEBUG = True
+        if (DEBUG): 
+            print("Tile Map Cords: X: " + str(self.x) + " Y: " + str(self.y) + 
+                " | Queue Turn: " + self.queue_turn +
+                " | Direction: " + self.direction +
                 " | Obstruction: " + str(self.checkObstructionDirection(tile_map, self.direction)))
+        
+        if(self.queue_time == 0):
+            self.queue_turn = "NONE"
+            self.queue_time = self.MAX_QUEUE_TIME
+
+        if(self.canTurn(tile_map, self.queue_turn) == True):
+            self.snapDisplayToGrid()
+            self.direction = self.queue_turn
+            self.queue_turn = "NONE"
+            self.lock_turn_time = 1
 
         if (self.checkObstructionDirection(tile_map, self.direction)):
+            self.queue_turn = "NONE"
             return
 
-        VERTICAL_OFFSET = 6
+        VERTICAL_OFFSET = 3
         HORIZONTAL_OFFSET = 2
-
-        if (self.direction == "UP"):    
+        
+        if (self.direction == "UP"):
             self.display_y -= PACMAN_SPEED
-            if(self.display_y / TILE_SIZE < self.y and self.display_y % TILE_SIZE == VERTICAL_OFFSET):    
+            if(self.display_y / TILE_SIZE < self.y and self.display_y % TILE_SIZE == VERTICAL_OFFSET):   
                 self.y -= 1
-                self.snapDisplayToGrid()
+                self.queue_time -= 1
+                if(self.lock_turn_time > 0): self.lock_turn_time -= 1
         if (self.direction == "DOWN"):  
             self.display_y += PACMAN_SPEED
-            if(self.display_y / TILE_SIZE > self.y and self.display_y % TILE_SIZE == VERTICAL_OFFSET):    
-                self.y += 1 
-                self.snapDisplayToGrid()
+            if(self.display_y / TILE_SIZE > self.y and self.display_y % TILE_SIZE == VERTICAL_OFFSET):
+                self.y += 1
+                self.queue_time -= 1
+                if(self.lock_turn_time > 0): self.lock_turn_time -= 1
         if (self.direction == "LEFT"):  
             self.display_x -= PACMAN_SPEED
-            if(self.display_x / TILE_SIZE < self.x and self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):    
+            if(self.display_x / TILE_SIZE < self.x and self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
                 self.x -= 1
-                self.snapDisplayToGrid()
+                self.queue_time -= 1
+                if(self.lock_turn_time > 0): self.lock_turn_time -= 1
         if (self.direction == "RIGHT"): 
             self.display_x += PACMAN_SPEED
-            if(self.display_x / TILE_SIZE > self.x and self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):   
-                self.x += 1  
-                self.snapDisplayToGrid()
+            if(self.display_x / TILE_SIZE > self.x and self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
+                self.x += 1
+                self.queue_time -= 1
+                if(self.lock_turn_time > 0): self.lock_turn_time -= 1
 
-        if (self.display_x < SCREEN_OFFSET + self.radius): 
-            self.display_x = SCREEN_WIDTH - SCREEN_OFFSET
+        if (self.display_x < SCREEN_OFFSET + self.radius and self.direction == "LEFT"): 
+            self.display_x = SCREEN_WIDTH
             self.x = MAP_WIDTH
-        if (self.display_x > SCREEN_WIDTH):  
-            self.display_x = SCREEN_OFFSET + SCREEN_OFFSET
-            self.x = 2
+        if (self.display_x > SCREEN_WIDTH and self.direction == "RIGHT"):  
+            self.display_x = SCREEN_OFFSET
+            self.x = 0
     
     def render(self, screen):
-
-        frames = [[
-                frame1UP, frame2UP, frame3UP
-            ], [
-                frame1DOWN, frame2DOWN, frame3DOWN
-            ], [
-                frame1LEFT, frame2LEFT, frame3LEFT
-            ], [
-                frame1RIGHT, frame2RIGHT, frame3RIGHT
-            ]
-        ]
-
         direction_mapping = {
             "UP": 0,
             "DOWN": 1,
@@ -163,18 +206,126 @@ class Pacman:
             "NONE" : 1
         }
 
-        if(self.frame_counter == 0): #draw 2nd frame
-            screen.blit(frames[direction_mapping[self.direction]][0], (self.display_x - PACMAN_RADIUS, self.display_y - PACMAN_RADIUS))
-            if(self.checkObstructionDirection(tilemap.tilemap, self.direction) == False):   self.frame_counter = 1
+        # starting frame
+        if(self.direction == "NONE"): 
+            screen.blit(self.frames[direction_mapping[self.direction]][0], (self.display_x - PACMAN_RADIUS, self.display_y - PACMAN_RADIUS))
             return
-        if(self.frame_counter == 1):
-            screen.blit(frames[direction_mapping[self.direction]][1], (self.display_x - PACMAN_RADIUS, self.display_y - PACMAN_RADIUS))
-            if(self.checkObstructionDirection(tilemap.tilemap, self.direction) == False):   self.frame_counter = 2
-            return
-        if(self.frame_counter == 2):
-            screen.blit(frames[direction_mapping[self.direction]][2], (self.display_x - PACMAN_RADIUS, self.display_y - PACMAN_RADIUS))
-            if(self.checkObstructionDirection(tilemap.tilemap, self.direction) == False):   self.frame_counter = 0
-            return
+
+        # Draws open mouth if obstructed
+        if(self.checkObstructionDirection(tilemap.tilemap, self.direction) == True):   self.frame_counter = 0
+
+        FRAME_DURATION = 8 
+        frame_index = (self.frame_counter // FRAME_DURATION) % 3  # Cycles between frame 1 2 and 3
+
+        screen.blit(self.frames[direction_mapping[self.direction]][frame_index], (self.display_x - PACMAN_RADIUS, self.display_y - PACMAN_RADIUS))
+
+        # only increment frame counter if not obstructed
+        if not self.checkObstructionDirection(tilemap.tilemap, self.direction):
+            self.frame_counter = (self.frame_counter + 1) % (FRAME_DURATION * 3)
+
+class Ghost:
+    def __init__(self, x, y, radius, direction, name):
+        # animation
+        self.frames = loadGhostFrames(name)
+        self.feared_state = False
+
+        # lock turning
+        self.lock_turn_time = 0
+
+        # position 
+        self.x = x
+        self.y = y
+        self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - radius + 3
+        self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - radius + 4
+        self.radius = radius
+        self.direction = direction
+    
+    def snapDisplayToGrid(self):
+        self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - self.radius + 3
+        self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - self.radius + 4
+
+    def getDirection(self):
+        direction_mapping = {
+            0: "UP",
+            1: "DOWN",
+            2: "LEFT",
+            3: "RIGHT"
+        }
+
+        return direction_mapping[random.randint(0, 3)]
+
+    def checkObstructionDirection(self, tile_map, direction):
+        OFFSET = 1
+        if (direction == "UP"):
+            if (tile_map[self.y - OFFSET][self.x] != -1):
+                return True
+        if (direction == "DOWN"):
+            if (tile_map[self.y + OFFSET][self.x] != -1):
+                return True
+        if (direction == "LEFT"):
+            if (tile_map[self.y][self.x - OFFSET] != -1):
+                return True
+        if (direction == "RIGHT"):
+            if (tile_map[self.y][self.x + OFFSET] != -1):
+                return True
+
+    
+    def canTurn(self, tile_map, wanted_direction):
+        if wanted_direction == "NONE":
+            return False
+        
+        if wanted_direction == self.direction:
+            return False
+
+        return not self.checkObstructionDirection(tile_map, wanted_direction)
+
+    def update(self, tile_map):
+        if(self.canTurn(tile_map, self.direction) == True):
+            self.snapDisplayToGrid()
+            self.direction = self.getDirection()
+            self.lock_turn_time = 1
+
+        if (self.checkObstructionDirection(tile_map, self.direction)):
+            self.direction = self.getDirection()
+        
+        VERTICAL_OFFSET = 3
+        HORIZONTAL_OFFSET = 2
+        
+        if (self.direction == "UP"):
+            self.display_y -= GHOST_SPEED
+            if(self.display_y / TILE_SIZE < self.y and self.display_y % TILE_SIZE == VERTICAL_OFFSET):   
+                self.y -= 1
+                if(self.lock_turn_time > 0): self.lock_turn_time -= 1
+        if (self.direction == "DOWN"):  
+            self.display_y += GHOST_SPEED
+            if(self.display_y / TILE_SIZE > self.y and self.display_y % TILE_SIZE == VERTICAL_OFFSET):
+                self.y += 1
+                if(self.lock_turn_time > 0): self.lock_turn_time -= 1
+        if (self.direction == "LEFT"):  
+            self.display_x -= GHOST_SPEED
+            if(self.display_x / TILE_SIZE < self.x and self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
+                self.x -= 1
+                if(self.lock_turn_time > 0): self.lock_turn_time -= 1
+        if (self.direction == "RIGHT"): 
+            self.display_x += GHOST_SPEED
+            if(self.display_x / TILE_SIZE > self.x and self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
+                self.x += 1
+                if(self.lock_turn_time > 0): self.lock_turn_time -= 1
+
+        if (self.display_x < SCREEN_OFFSET + self.radius and self.direction == "LEFT"): 
+            self.display_x = SCREEN_WIDTH
+            self.x = MAP_WIDTH
+        if (self.display_x > SCREEN_WIDTH and self.direction == "RIGHT"):  
+            self.display_x = SCREEN_OFFSET
+            self.x = 0
+    
+    def render(self, screen):
+        if(self.feared_state == True):
+            screen.blit(self.frames[1], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
+        else:
+            screen.blit(self.frames[0], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
+
+      
 
 class Tilemap:
     def __init__(self, filename):
@@ -206,6 +357,7 @@ clock = pygame.time.Clock()
 running = True
 
 pacman = Pacman(2, 6, PACMAN_RADIUS, "NONE")
+blinky = Ghost(14, 19, GHOST_RADIUS, "UP", "blinky")
 tilemap = Tilemap("Resource/map/map.png")
 
 while running:
@@ -219,23 +371,32 @@ while running:
             if (event.key == pygame.constants.K_ESCAPE):
                 running = False
 
-            if (event.key == pygame.constants.K_UP and pacman.moveInDirection(tilemap.tilemap, "UP")):
-                    pacman.direction = "UP"
-            if (event.key == pygame.constants.K_DOWN and pacman.moveInDirection(tilemap.tilemap, "DOWN")):
-                    pacman.direction = "DOWN"
-            if (event.key == pygame.constants.K_LEFT and pacman.moveInDirection(tilemap.tilemap, "LEFT")):
-                    pacman.direction = "LEFT"
-            if (event.key == pygame.constants.K_RIGHT and pacman.moveInDirection(tilemap.tilemap, "RIGHT")):
-                    pacman.direction = "RIGHT"
+            if (event.key == pygame.constants.K_UP and pacman.lock_turn_time == 0):
+                    pacman.queue_turn = "UP"
+                    pacman.queue_time = pacman.MAX_QUEUE_TIME
+            if (event.key == pygame.constants.K_DOWN and pacman.lock_turn_time == 0):
+                    pacman.queue_turn = "DOWN"
+                    pacman.queue_time = pacman.MAX_QUEUE_TIME
+            if (event.key == pygame.constants.K_LEFT and pacman.lock_turn_time == 0):
+                    pacman.queue_turn = "LEFT"
+                    pacman.queue_time = pacman.MAX_QUEUE_TIME
+            if (event.key == pygame.constants.K_RIGHT and pacman.lock_turn_time == 0):
+                    pacman.queue_turn = "RIGHT"
+                    pacman.queue_time = pacman.MAX_QUEUE_TIME
 
-    # update
+    # update pacman
     pacman.update(tilemap.tilemap)
+
+    # update ghosts
+    blinky.update(tilemap.tilemap)
 
     # fill the screen with a color to wipe away anything from last frame
     screen.fill("black")
 
+    # draw your work on the screen
     tilemap.render(screen)
     pacman.render(screen)
+    blinky.render(screen)
 
     # flip() the display to put your work on screen
     pygame.display.flip()

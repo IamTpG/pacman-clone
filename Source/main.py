@@ -13,10 +13,8 @@ SCREEN_OFFSET = 10
 SCREEN_WIDTH  = MAP_WIDTH  * TILE_SIZE
 SCREEN_HEIGHT = MAP_HEIGHT * TILE_SIZE
 
-PACMAN_SPEED  = 2
 PACMAN_RADIUS = TILE_SIZE - 5
 
-GHOST_SPEED = 1
 GHOST_RADIUS = TILE_SIZE - 5
 
 # Utils function for reading tilemap
@@ -83,14 +81,14 @@ def loadGhostFrames(name):
         frames = [clyde, blue_ghost]
 
     SCALING_FACTOR = 2
+
     for i in range(2):
         frames[i] = pygame.transform.scale(frames[i], (GHOST_RADIUS * SCALING_FACTOR, GHOST_RADIUS * SCALING_FACTOR))
 
     return frames
 
-
 class Pacman:
-    def __init__(self, x, y, radius, direction):
+    def __init__(self, starting_postion, radius, direction):
         # animation
         self.frames = loadPacmanFrames()
         self.frame_counter = 0
@@ -103,9 +101,10 @@ class Pacman:
         self.MAX_QUEUE_TIME = 3
         self.queue_time = self.MAX_QUEUE_TIME
 
-        # position 
-        self.x = x
-        self.y = y
+        # stuff
+        self.speed = 2 
+        self.x = starting_postion[0]
+        self.y = starting_postion[1]
         self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - radius + 3
         self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - radius + 4
         self.radius = radius
@@ -130,7 +129,6 @@ class Pacman:
             if (tile_map[self.y][self.x + OFFSET] != -1):
                 return True
 
-    
     def canTurn(self, tile_map, wanted_direction):
         if wanted_direction == "NONE":
             return False
@@ -141,7 +139,7 @@ class Pacman:
         return not self.checkObstructionDirection(tile_map, wanted_direction)
 
     def update(self, tile_map):
-        DEBUG = True
+        DEBUG = False
         if (DEBUG): 
             print("Tile Map Cords: X: " + str(self.x) + " Y: " + str(self.y) + 
                 " | Queue Turn: " + self.queue_turn +
@@ -166,25 +164,25 @@ class Pacman:
         HORIZONTAL_OFFSET = 2
         
         if (self.direction == "UP"):
-            self.display_y -= PACMAN_SPEED
+            self.display_y -= self.speed
             if(self.display_y / TILE_SIZE < self.y and self.display_y % TILE_SIZE == VERTICAL_OFFSET):   
                 self.y -= 1
                 self.queue_time -= 1
                 if(self.lock_turn_time > 0): self.lock_turn_time -= 1
         if (self.direction == "DOWN"):  
-            self.display_y += PACMAN_SPEED
+            self.display_y += self.speed
             if(self.display_y / TILE_SIZE > self.y and self.display_y % TILE_SIZE == VERTICAL_OFFSET):
                 self.y += 1
                 self.queue_time -= 1
                 if(self.lock_turn_time > 0): self.lock_turn_time -= 1
         if (self.direction == "LEFT"):  
-            self.display_x -= PACMAN_SPEED
+            self.display_x -= self.speed
             if(self.display_x / TILE_SIZE < self.x and self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
                 self.x -= 1
                 self.queue_time -= 1
                 if(self.lock_turn_time > 0): self.lock_turn_time -= 1
         if (self.direction == "RIGHT"): 
-            self.display_x += PACMAN_SPEED
+            self.display_x += self.speed
             if(self.display_x / TILE_SIZE > self.x and self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
                 self.x += 1
                 self.queue_time -= 1
@@ -224,17 +222,25 @@ class Pacman:
             self.frame_counter = (self.frame_counter + 1) % (FRAME_DURATION * 3)
 
 class Ghost:
-    def __init__(self, x, y, radius, direction, name):
+    def __init__(self, starting_position, radius, direction, name):
         # animation
         self.frames = loadGhostFrames(name)
+
+        # ghost states
+        self.scatter_state = False
+        self.scatter_time = 50
+
         self.feared_state = False
+        self.MAX_FEARED_TIME = 300
+        self.feared_time = 0
 
         # lock turning
         self.lock_turn_time = 0
 
-        # position 
-        self.x = x
-        self.y = y
+        # stuff
+        self.speed = 2
+        self.x = starting_position[0]
+        self.y = starting_position[1]
         self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - radius + 3
         self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - radius + 4
         self.radius = radius
@@ -244,15 +250,19 @@ class Ghost:
         self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - self.radius + 3
         self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - self.radius + 4
 
-    def getDirection(self):
-        direction_mapping = {
-            0: "UP",
-            1: "DOWN",
-            2: "LEFT",
-            3: "RIGHT"
+    def getDirection(self, tile_map):
+        possible_turns = {
+            "UP": ["LEFT", "RIGHT", "UP"],
+            "DOWN": ["LEFT", "RIGHT", "DOWN"],
+            "LEFT": ["UP", "DOWN", "LEFT"],
+            "RIGHT": ["UP", "DOWN", "RIGHT"]
         }
 
-        return direction_mapping[random.randint(0, 3)]
+        # Filter out invalid turns
+        valid_turns = [direction for direction in possible_turns[self.direction] if not self.checkObstructionDirection(tile_map, direction)]
+    
+        # Return a random valid turn, if no valid turn exist, keep moving straight
+        return random.choice(valid_turns) if valid_turns else self.direction
 
     def checkObstructionDirection(self, tile_map, direction):
         OFFSET = 1
@@ -269,45 +279,45 @@ class Ghost:
             if (tile_map[self.y][self.x + OFFSET] != -1):
                 return True
 
-    
-    def canTurn(self, tile_map, wanted_direction):
-        if wanted_direction == "NONE":
-            return False
-        
-        if wanted_direction == self.direction:
-            return False
+    def canTurn(self, tile_map):
+        allowed_turns = {
+            "LEFT": ["UP", "DOWN"],
+            "RIGHT": ["UP", "DOWN"],
+            "UP": ["LEFT", "RIGHT"],
+            "DOWN": ["LEFT", "RIGHT"]
+        }
 
-        return not self.checkObstructionDirection(tile_map, wanted_direction)
+        return any(not self.checkObstructionDirection(tile_map, direction) for direction in allowed_turns[self.direction])
 
     def update(self, tile_map):
-        if(self.canTurn(tile_map, self.direction) == True):
-            self.snapDisplayToGrid()
-            self.direction = self.getDirection()
-            self.lock_turn_time = 1
+        if(self.canTurn(tile_map) == True and self.lock_turn_time == 0):
+            self.direction = self.getDirection(tile_map)
+            self.lock_turn_time = 5
 
         if (self.checkObstructionDirection(tile_map, self.direction)):
-            self.direction = self.getDirection()
+            self.snapDisplayToGrid()
+            self.direction = self.getDirection(tile_map)
         
         VERTICAL_OFFSET = 3
         HORIZONTAL_OFFSET = 2
         
         if (self.direction == "UP"):
-            self.display_y -= GHOST_SPEED
+            self.display_y -= self.speed
             if(self.display_y / TILE_SIZE < self.y and self.display_y % TILE_SIZE == VERTICAL_OFFSET):   
                 self.y -= 1
                 if(self.lock_turn_time > 0): self.lock_turn_time -= 1
         if (self.direction == "DOWN"):  
-            self.display_y += GHOST_SPEED
+            self.display_y += self.speed
             if(self.display_y / TILE_SIZE > self.y and self.display_y % TILE_SIZE == VERTICAL_OFFSET):
                 self.y += 1
                 if(self.lock_turn_time > 0): self.lock_turn_time -= 1
         if (self.direction == "LEFT"):  
-            self.display_x -= GHOST_SPEED
+            self.display_x -= self.speed
             if(self.display_x / TILE_SIZE < self.x and self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
                 self.x -= 1
                 if(self.lock_turn_time > 0): self.lock_turn_time -= 1
         if (self.direction == "RIGHT"): 
-            self.display_x += GHOST_SPEED
+            self.display_x += self.speed
             if(self.display_x / TILE_SIZE > self.x and self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
                 self.x += 1
                 if(self.lock_turn_time > 0): self.lock_turn_time -= 1
@@ -318,14 +328,20 @@ class Ghost:
         if (self.display_x > SCREEN_WIDTH and self.direction == "RIGHT"):  
             self.display_x = SCREEN_OFFSET
             self.x = 0
+
+        if(self.feared_state == True):
+            self.feared_time -= 1
+            self.speed = 1
+            if(self.feared_time == 0):
+                self.feared_state = False
+                self.snapDisplayToGrid()
+                self.speed = 2
     
     def render(self, screen):
         if(self.feared_state == True):
             screen.blit(self.frames[1], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
         else:
             screen.blit(self.frames[0], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
-
-      
 
 class Tilemap:
     def __init__(self, filename):
@@ -356,8 +372,18 @@ screen = pygame.display.set_mode((SCREEN_WIDTH + SCREEN_OFFSET * 2, SCREEN_HEIGH
 clock = pygame.time.Clock()
 running = True
 
-pacman = Pacman(2, 6, PACMAN_RADIUS, "NONE")
-blinky = Ghost(14, 19, GHOST_RADIUS, "UP", "blinky")
+pacman_starting_position = (15, 28)
+blinky_starting_position = (15, 16)
+clyde_starting_position = (15, 19)
+inky_starting_position = (13, 19)
+pinky_starting_position = (17, 19)
+
+pacman = Pacman(pacman_starting_position, PACMAN_RADIUS, "NONE")
+blinky = Ghost(blinky_starting_position, GHOST_RADIUS, "UP", "blinky")
+clyde = Ghost(clyde_starting_position, GHOST_RADIUS, "UP", "clyde")
+inky = Ghost(inky_starting_position, GHOST_RADIUS, "UP", "inky")
+pinky = Ghost(pinky_starting_position, GHOST_RADIUS, "UP", "pinky")
+
 tilemap = Tilemap("Resource/map/map.png")
 
 while running:
@@ -372,31 +398,49 @@ while running:
                 running = False
 
             if (event.key == pygame.constants.K_UP and pacman.lock_turn_time == 0):
-                    pacman.queue_turn = "UP"
-                    pacman.queue_time = pacman.MAX_QUEUE_TIME
+                pacman.queue_turn = "UP"
+                pacman.queue_time = pacman.MAX_QUEUE_TIME
             if (event.key == pygame.constants.K_DOWN and pacman.lock_turn_time == 0):
-                    pacman.queue_turn = "DOWN"
-                    pacman.queue_time = pacman.MAX_QUEUE_TIME
+                pacman.queue_turn = "DOWN"
+                pacman.queue_time = pacman.MAX_QUEUE_TIME
             if (event.key == pygame.constants.K_LEFT and pacman.lock_turn_time == 0):
-                    pacman.queue_turn = "LEFT"
-                    pacman.queue_time = pacman.MAX_QUEUE_TIME
+                pacman.queue_turn = "LEFT"
+                pacman.queue_time = pacman.MAX_QUEUE_TIME
             if (event.key == pygame.constants.K_RIGHT and pacman.lock_turn_time == 0):
-                    pacman.queue_turn = "RIGHT"
-                    pacman.queue_time = pacman.MAX_QUEUE_TIME
+                pacman.queue_turn = "RIGHT"
+                pacman.queue_time = pacman.MAX_QUEUE_TIME
+
+            #debug, remove this later
+            if(event.key == pygame.constants.K_SPACE):
+                blinky.feared_state = not blinky.feared_state
+                clyde.feared_state = not clyde.feared_state
+                inky.feared_state = not inky.feared_state
+                pinky.feared_state = not pinky.feared_state
+
+                blinky.feared_time = blinky.MAX_FEARED_TIME
+                clyde.feared_time = clyde.MAX_FEARED_TIME
+                inky.feared_time = inky.MAX_FEARED_TIME
+                pinky.feared_time = pinky.MAX_FEARED_TIME
 
     # update pacman
     pacman.update(tilemap.tilemap)
 
     # update ghosts
     blinky.update(tilemap.tilemap)
+    clyde.update(tilemap.tilemap)
+    inky.update(tilemap.tilemap)
+    pinky.update(tilemap.tilemap)
 
     # fill the screen with a color to wipe away anything from last frame
     screen.fill("black")
 
-    # draw your work on the screen
+    # render objects
     tilemap.render(screen)
     pacman.render(screen)
     blinky.render(screen)
+    clyde.render(screen)
+    inky.render(screen)
+    pinky.render(screen)
 
     # flip() the display to put your work on screen
     pygame.display.flip()

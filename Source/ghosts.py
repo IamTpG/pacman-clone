@@ -2,24 +2,24 @@ import pygame
 import random
 
 # local
-import tile_map_constants
+import tile_map as TMap
 
 if __name__ == '__main__':
     print("This is a module, it should not be run standalone!")
 
 # map constants
-TILE_RESU = tile_map_constants.TILE_RESU
-TILE_SIZE = tile_map_constants.TILE_SIZE
+TILE_RESU = TMap.TILE_RESU
+TILE_SIZE = TMap.TILE_SIZE
 
-MAP_WIDTH = tile_map_constants.MAP_WIDTH
-MAP_HEIGHT = tile_map_constants.MAP_HEIGHT
+MAP_WIDTH = TMap.MAP_WIDTH
+MAP_HEIGHT = TMap.MAP_HEIGHT
 
-SCREEN_OFFSET = tile_map_constants.SCREEN_OFFSET
-SCREEN_WIDTH = tile_map_constants.SCREEN_WIDTH
-SCREEN_HEIGHT = tile_map_constants.SCREEN_HEIGHT
+SCREEN_OFFSET = TMap.SCREEN_OFFSET
+SCREEN_WIDTH = TMap.SCREEN_WIDTH
+SCREEN_HEIGHT = TMap.SCREEN_HEIGHT
 
-GHOST_RADIUS = tile_map_constants.GHOST_RADIUS
-GHOST_SPEED = tile_map_constants.GHOST_SPEED
+GHOST_RADIUS = TMap.GHOST_RADIUS
+GHOST_SPEED = TMap.GHOST_SPEED
 
 def loadGhostFrames(name):
     blinky = pygame.image.load("Resource/ghosts/blinky.png")
@@ -60,7 +60,7 @@ class Ghost:
 
         # movement
         self.direction = direction
-        self.speed = 0
+        self.speed = GHOST_SPEED
         self.x = starting_position[0]
         self.y = starting_position[1]
 
@@ -77,11 +77,8 @@ class Ghost:
         self.x = starting_position[0]
         self.y = starting_position[1]
         self.direction = direction
-        self.speed = 0
-        self.snapDisplayToGrid()
-
-    def unfreeze(self):
         self.speed = GHOST_SPEED
+        self.snapDisplayToGrid()
 
     def getDirection(self, tile_map):
         possible_turns = {
@@ -98,19 +95,46 @@ class Ghost:
         return random.choice(valid_turns) if valid_turns else self.direction
 
     def checkObstructionDirection(self, tile_map, direction):
+        if(direction == "NONE"): return False
+
         OFFSET = 1
-        if (direction == "UP"):
-            if (tile_map[self.y - OFFSET][self.x] != -1):
-                return True
-        if (direction == "DOWN"):
-            if (tile_map[self.y + OFFSET][self.x] != -1):
-                return True
-        if (direction == "LEFT"):
-            if (tile_map[self.y][self.x - OFFSET] != -1):
-                return True
-        if (direction == "RIGHT"):
-            if (tile_map[self.y][self.x + OFFSET] != -1):
-                return True
+        direction_mapping = {
+            "UP": (0, -OFFSET),
+            "DOWN": (0, OFFSET),
+            "LEFT": (-OFFSET, 0),
+            "RIGHT": (OFFSET, 0)
+        }
+
+        dx, dy = direction_mapping[direction]
+        if (tile_map[self.y + dy][self.x + dx] != -1):
+            return True
+        return False
+
+    #wip
+    def preventCollisionWithOtherGhosts(self, ghost):
+        '''
+        opposite_direction = {
+            "UP": "DOWN",
+            "DOWN": "UP",
+            "LEFT": "RIGHT",
+            "RIGHT": "LEFT"
+        }
+
+        direction_mapping = {
+            "UP": (0, 1),
+            "DOWN": (0, -1),
+            "LEFT": (1, 0),
+            "RIGHT": (-1, 0)
+        }
+
+        if self.x == ghost.x and self.y == ghost.y:
+            self.direction = opposite_direction[self.direction]
+            self.x = self.x + direction_mapping[opposite_direction[self.direction]][0]
+            self.y = self.y + direction_mapping[opposite_direction[self.direction]][1]
+            ghost.x = ghost.x + direction_mapping[opposite_direction[ghost.direction]][0]
+            ghost.y = ghost.y + direction_mapping[opposite_direction[ghost.direction]][1]
+            self.snapDisplayToGrid()
+        '''
 
     def canTurn(self, tile_map):
         allowed_turns = {

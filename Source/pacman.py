@@ -1,22 +1,22 @@
 import pygame
 
 # local
-import tile_map_constants
+import tile_map as TMap
 
 if __name__ == "__main__":
     print("This is a module, it should not be run standalone!")
 
 # Constants
-TILE_RESU = tile_map_constants.TILE_RESU
-TILE_SIZE = tile_map_constants.TILE_SIZE
+TILE_RESU = TMap.TILE_RESU
+TILE_SIZE = TMap.TILE_SIZE
 
-MAP_WIDTH = tile_map_constants.MAP_WIDTH
-MAP_HEIGHT = tile_map_constants.MAP_HEIGHT
+MAP_WIDTH = TMap.MAP_WIDTH
+MAP_HEIGHT = TMap.MAP_HEIGHT
 
-SCREEN_OFFSET = tile_map_constants.SCREEN_OFFSET
-SCREEN_WIDTH = tile_map_constants.SCREEN_WIDTH
+SCREEN_OFFSET = TMap.SCREEN_OFFSET
+SCREEN_WIDTH = TMap.SCREEN_WIDTH
 
-PACMAN_RADIUS = tile_map_constants.PACMAN_RADIUS
+PACMAN_RADIUS = TMap.PACMAN_RADIUS
 
 def loadPacmanFrames():
     frame1UP = pygame.image.load("Resource\\pacman-up\\1.png")

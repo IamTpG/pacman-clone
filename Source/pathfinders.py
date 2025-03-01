@@ -1,7 +1,7 @@
 import heapq
 
 # this will hold the pathfinding algorithms like bfs, dfs, a*, etc.
-def dfs_recursive_ordered(grid, current_i, current_j, visited, goal_i, goal_j, expanded): 
+def dfs_recursive_ordered(grid, current_i, current_j, visited, goal_i,goal_j,expanded): 
     rows, cols = len(grid), len(grid[0])
     
     # Check boundaries and if already visited

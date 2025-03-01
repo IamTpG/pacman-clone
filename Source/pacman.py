@@ -6,7 +6,7 @@ import tile_map as TMap
 if __name__ == "__main__":
     print("This is a module, it should not be run standalone!")
 
-# Constants
+# constants
 TILE_RESU = TMap.TILE_RESU
 TILE_SIZE = TMap.TILE_SIZE
 
@@ -69,16 +69,16 @@ class Pacman:
     def __init__(self, starting_postion, direction):
         # animation
         self.frames = loadPacmanFrames()
-        self.frame_counter = 0
+        self.frame_counter = 0 # used to cycle through frames
         self.sound = loadPacmanSound()
-        self.sound_index = 0
+        self.sound_index = 0 # used to play sound at intervals
 
-        # lock turning 
-        self.lock_turn_time = 0
+        # used to lock turning for a certain amount of time
+        self.lock_turn_time = 0 
 
-        # save the next turn and time before it is reset
-        self.queue_turn = "NONE"
-        self.MAX_QUEUE_TIME = 3
+        # used to queue turning inputs
+        self.queue_turn = "NONE" 
+        self.MAX_QUEUE_TIME = 3 
         self.queue_time = self.MAX_QUEUE_TIME
 
         # stuff
@@ -97,7 +97,7 @@ class Pacman:
         self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - self.radius + 3
         self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - self.radius + 4
 
-    def reset(self, starting_position, direction):
+    def resetPosition(self, starting_position, direction):
         self.x = starting_position[0]
         self.y = starting_position[1]
         self.direction = direction
@@ -128,26 +128,25 @@ class Pacman:
         return False
 
     def canTurn(self, tile_map, wanted_direction):
-        if wanted_direction == "NONE":
-            return False
-        
-        if wanted_direction == self.direction:
+        if wanted_direction == "NONE" or wanted_direction == self.direction:
             return False
 
         return not self.checkObstructionDirection(tile_map, wanted_direction)
 
     def update(self, tile_map):
-        DEBUG = False
+        DEBUG = True
         if (DEBUG): 
             print("Tile Map Cords: X: " + str(self.x) + " Y: " + str(self.y) + 
                 " | Queue Turn: " + self.queue_turn +
                 " | Direction: " + self.direction +
                 " | Obstruction: " + str(self.checkObstructionDirection(tile_map, self.direction)))
         
+        # reset queue turn if time runs out
         if(self.queue_time == 0):
             self.queue_turn = "NONE"
             self.queue_time = self.MAX_QUEUE_TIME
 
+        # turn pacman if possible
         if(self.canTurn(tile_map, self.queue_turn) == True):
             self.snapDisplayToGrid()
             self.direction = self.queue_turn
@@ -161,31 +160,32 @@ class Pacman:
         VERTICAL_OFFSET = 3
         HORIZONTAL_OFFSET = 2
         
-        if (self.direction == "UP"):
-            self.display_y -= self.speed
-            if(self.display_y / TILE_SIZE < self.y and self.display_y % TILE_SIZE == VERTICAL_OFFSET):   
-                self.y -= 1
-                self.queue_time -= 1
-                if(self.lock_turn_time > 0): self.lock_turn_time -= 1
-        if (self.direction == "DOWN"):  
-            self.display_y += self.speed
-            if(self.display_y / TILE_SIZE > self.y and self.display_y % TILE_SIZE == VERTICAL_OFFSET):
-                self.y += 1
-                self.queue_time -= 1
-                if(self.lock_turn_time > 0): self.lock_turn_time -= 1
-        if (self.direction == "LEFT"):  
-            self.display_x -= self.speed
-            if(self.display_x / TILE_SIZE < self.x and self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
-                self.x -= 1
-                self.queue_time -= 1
-                if(self.lock_turn_time > 0): self.lock_turn_time -= 1
-        if (self.direction == "RIGHT"): 
-            self.display_x += self.speed
-            if(self.display_x / TILE_SIZE > self.x and self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
-                self.x += 1
-                self.queue_time -= 1
-                if(self.lock_turn_time > 0): self.lock_turn_time -= 1
+        update_direction = {
+            "UP": (0, -self.speed, 0, -1),
+            "DOWN": (0, self.speed, 0, 1),
+            "LEFT": (-self.speed, 0, -1, 0),
+            "RIGHT": (self.speed, 0, 1, 0)  
+        }
 
+        # update position
+        if (self.direction in update_direction):
+            self.display_x += update_direction[self.direction][0]
+            self.display_y += update_direction[self.direction][1]
+            
+            if(self.direction == "UP" or self.direction == "DOWN"):
+                if(self.display_y % TILE_SIZE == VERTICAL_OFFSET):
+                    self.x += update_direction[self.direction][2]
+                    self.y += update_direction[self.direction][3]
+                    self.queue_time -= 1
+                    if(self.lock_turn_time > 0): self.lock_turn_time -= 1
+            if(self.direction == "LEFT" or self.direction == "RIGHT"):
+                if(self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
+                    self.x += update_direction[self.direction][2]
+                    self.y += update_direction[self.direction][3]
+                    self.queue_time -= 1
+                    if(self.lock_turn_time > 0): self.lock_turn_time -= 1
+            
+        # wrap around screen
         if (self.display_x < SCREEN_OFFSET + self.radius and self.direction == "LEFT"): 
             self.display_x = SCREEN_WIDTH
             self.x = MAP_WIDTH
@@ -218,7 +218,6 @@ class Pacman:
         # only increment frame counter if not obstructed
         if not self.checkObstructionDirection(tilemap.tilemap, self.direction):
             self.frame_counter = (self.frame_counter + 1) % (FRAME_DURATION * 3)
-
 
         SOUND_INTERVAL = 36
 

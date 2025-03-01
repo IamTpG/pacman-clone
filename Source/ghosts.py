@@ -1,8 +1,10 @@
 import pygame
 import random
+import queue
 
 # local
 import tile_map as TMap
+import pathfinders
 
 if __name__ == '__main__':
     print("This is a module, it should not be run standalone!")
@@ -73,14 +75,14 @@ class Ghost:
         self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - self.radius + 3
         self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - self.radius + 4
 
-    def reset(self, starting_position, direction):
+    def resetPosition(self, starting_position, direction):
         self.x = starting_position[0]
         self.y = starting_position[1]
         self.direction = direction
         self.speed = GHOST_SPEED
         self.snapDisplayToGrid()
 
-    def getDirection(self, tile_map):
+    def getDirection(self, tile_map, pacman):
         possible_turns = {
             "UP": ["LEFT", "RIGHT", "UP"],
             "DOWN": ["LEFT", "RIGHT", "DOWN"],
@@ -93,6 +95,11 @@ class Ghost:
     
         # Return a random valid turn, if no valid turn exist, keep moving straight
         return random.choice(valid_turns) if valid_turns else self.direction
+        
+        '''
+        expanded : set = set()
+        return pathfinders.a_star(tile_map, (self.x, self.y), (pacman.x, pacman.y), expanded)
+        '''
 
     def checkObstructionDirection(self, tile_map, direction):
         if(direction == "NONE"): return False
@@ -137,6 +144,9 @@ class Ghost:
         '''
 
     def canTurn(self, tile_map):
+        if(self.direction == "NONE"):
+            return False
+
         allowed_turns = {
             "LEFT": ["UP", "DOWN"],
             "RIGHT": ["UP", "DOWN"],
@@ -146,38 +156,39 @@ class Ghost:
 
         return any(not self.checkObstructionDirection(tile_map, direction) for direction in allowed_turns[self.direction])
 
-    def update(self, tile_map):
+    def update(self, tile_map, pacman):
         if(self.canTurn(tile_map) == True and self.lock_turn_time == 0):
-            self.direction = self.getDirection(tile_map)
+            self.direction = self.getDirection(tile_map, pacman)
             self.lock_turn_time = 5
 
         if (self.checkObstructionDirection(tile_map, self.direction)):
             self.snapDisplayToGrid()
-            self.direction = self.getDirection(tile_map)
+            self.direction = self.getDirection(tile_map, pacman)
         
         VERTICAL_OFFSET = 3
         HORIZONTAL_OFFSET = 2
         
-        if (self.direction == "UP"):
-            self.display_y -= self.speed
-            if(self.display_y / TILE_SIZE < self.y and self.display_y % TILE_SIZE == VERTICAL_OFFSET):   
-                self.y -= 1
-                if(self.lock_turn_time > 0): self.lock_turn_time -= 1
-        if (self.direction == "DOWN"):  
-            self.display_y += self.speed
-            if(self.display_y / TILE_SIZE > self.y and self.display_y % TILE_SIZE == VERTICAL_OFFSET):
-                self.y += 1
-                if(self.lock_turn_time > 0): self.lock_turn_time -= 1
-        if (self.direction == "LEFT"):  
-            self.display_x -= self.speed
-            if(self.display_x / TILE_SIZE < self.x and self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
-                self.x -= 1
-                if(self.lock_turn_time > 0): self.lock_turn_time -= 1
-        if (self.direction == "RIGHT"): 
-            self.display_x += self.speed
-            if(self.display_x / TILE_SIZE > self.x and self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
-                self.x += 1
-                if(self.lock_turn_time > 0): self.lock_turn_time -= 1
+        update_direction = {
+            "UP": (0, -self.speed, 0, -1),
+            "DOWN": (0, self.speed, 0, 1),
+            "LEFT": (-self.speed, 0, -1, 0),
+            "RIGHT": (self.speed, 0, 1, 0)  
+        }
+
+        if (self.direction in update_direction):
+            self.display_x += update_direction[self.direction][0]
+            self.display_y += update_direction[self.direction][1]
+            
+            if(self.direction == "UP" or self.direction == "DOWN"):
+                if(self.display_y % TILE_SIZE == VERTICAL_OFFSET):
+                    self.x += update_direction[self.direction][2]
+                    self.y += update_direction[self.direction][3]
+                    self.lock_turn_time -= 1
+            if(self.direction == "LEFT" or self.direction == "RIGHT"):
+                if(self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
+                    self.x += update_direction[self.direction][2]
+                    self.y += update_direction[self.direction][3]
+                    self.lock_turn_time -= 1
 
         if (self.display_x < SCREEN_OFFSET + self.radius and self.direction == "LEFT"): 
             self.display_x = SCREEN_WIDTH

@@ -23,24 +23,49 @@ SCREEN_HEIGHT = TMap.SCREEN_HEIGHT
 GHOST_RADIUS = TMap.GHOST_RADIUS
 GHOST_SPEED = TMap.GHOST_SPEED
 
+SCALING_FACTOR = 1.1
+
 def loadGhostFrames(name):
-    blinky = pygame.image.load("Resource/ghosts/blinky.png")
-    inky = pygame.image.load("Resource/ghosts/inky.png")
-    pinky = pygame.image.load("Resource/ghosts/pinky.png")
-    clyde = pygame.image.load("Resource/ghosts/clyde.png")
-    blue_ghost = pygame.image.load("Resource/ghosts/blue_ghost.png")
+    blinky_DOWN = pygame.image.load("Resource\\ghosts\\" + name + "\\down.png")
+    blinky_UP = pygame.image.load("Resource\\ghosts\\" + name + "\\up.png")
+    blinky_LEFT = pygame.image.load("Resource\\ghosts\\" + name + "\\left.png")
+    blinky_RIGHT = pygame.image.load("Resource\\ghosts\\" + name + "\\right.png")
 
+    inky_DOWN = pygame.image.load("Resource\\ghosts\\" + name + "\\down.png")
+    inky_UP = pygame.image.load("Resource\\ghosts\\" + name + "\\up.png")
+    inky_LEFT = pygame.image.load("Resource\\ghosts\\" + name + "\\left.png")
+    inky_RIGHT = pygame.image.load("Resource\\ghosts\\" + name + "\\right.png")
+
+    clyde_DOWN = pygame.image.load("Resource\\ghosts\\" + name + "\\down.png")
+    clyde_UP = pygame.image.load("Resource\\ghosts\\" + name + "\\up.png")
+    clyde_LEFT = pygame.image.load("Resource\\ghosts\\" + name + "\\left.png")
+    clyde_RIGHT = pygame.image.load("Resource\\ghosts\\" + name + "\\right.png")
+
+    pinky_DOWN = pygame.image.load("Resource\\ghosts\\" + name + "\\down.png")
+    pinky_UP = pygame.image.load("Resource\\ghosts\\" + name + "\\up.png")
+    pinky_LEFT = pygame.image.load("Resource\\ghosts\\" + name + "\\left.png")
+    pinky_RIGHT = pygame.image.load("Resource\\ghosts\\" + name + "\\right.png")
+
+    feared = pygame.image.load("Resource\\ghosts\\feared.png")
+    dead = pygame.image.load("Resource\\ghosts\\dead.png")
+
+    blinky_frames = [blinky_DOWN, blinky_UP, blinky_LEFT, blinky_RIGHT, feared, dead]
+    inky_frames = [inky_DOWN, inky_UP, inky_LEFT, inky_RIGHT, feared, dead]
+    clyde_frames = [clyde_DOWN, clyde_UP, clyde_LEFT, clyde_RIGHT, feared, dead]
+    pinky_frames = [pinky_DOWN, pinky_UP, pinky_LEFT, pinky_RIGHT, feared, dead]
+
+    for i in range(6):
+        blinky_frames[i] = pygame.transform.scale(blinky_frames[i], (GHOST_RADIUS * SCALING_FACTOR * 2, GHOST_RADIUS * SCALING_FACTOR * 2))
+        inky_frames[i] = pygame.transform.scale(inky_frames[i], (GHOST_RADIUS * SCALING_FACTOR * 2, GHOST_RADIUS * SCALING_FACTOR * 2))
+        clyde_frames[i] = pygame.transform.scale(clyde_frames[i], (GHOST_RADIUS * SCALING_FACTOR * 2, GHOST_RADIUS * SCALING_FACTOR * 2))
+        pinky_frames[i] = pygame.transform.scale(pinky_frames[i], (GHOST_RADIUS * SCALING_FACTOR * 2, GHOST_RADIUS * SCALING_FACTOR * 2))
+            
     ghost_frames = {
-        "blinky": [blinky, blue_ghost],
-        "inky": [inky, blue_ghost],
-        "pinky": [pinky, blue_ghost],
-        "clyde": [clyde, blue_ghost]
+        "blinky": blinky_frames,
+        "inky": inky_frames,
+        "clyde": clyde_frames,
+        "pinky": pinky_frames
     }
-
-    SCALING_FACTOR = 2
-
-    for i in range(2):
-        ghost_frames[name][i] = pygame.transform.scale(ghost_frames[name][i], (GHOST_RADIUS * SCALING_FACTOR, GHOST_RADIUS * SCALING_FACTOR))
 
     return ghost_frames[name]
 
@@ -56,6 +81,8 @@ class Ghost:
         self.feared_state = False
         self.MAX_FEARED_TIME = 300
         self.feared_time = 0
+
+        self.freeze_state = False
 
         # lock turning
         self.lock_turn_time = 0
@@ -74,6 +101,13 @@ class Ghost:
     def snapDisplayToGrid(self):
         self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - self.radius + 3
         self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - self.radius + 4
+
+    def freeze(self):
+        self.speed = 0
+
+    def unfreeze(self): 
+        self.speed = GHOST_SPEED
+        self.snapDisplayToGrid()
 
     def resetPosition(self, starting_position, direction):
         self.x = starting_position[0]
@@ -157,6 +191,9 @@ class Ghost:
         return any(not self.checkObstructionDirection(tile_map, direction) for direction in allowed_turns[self.direction])
 
     def update(self, tile_map, pacman):
+        if(self.freeze_state == True):
+            return
+
         if(self.canTurn(tile_map) == True and self.lock_turn_time == 0):
             self.direction = self.getDirection(tile_map, pacman)
             self.lock_turn_time = 5
@@ -206,7 +243,14 @@ class Ghost:
                 self.speed = 2
     
     def render(self, screen):
+        direction_mapping = {
+            "UP": 1,
+            "DOWN": 0,
+            "LEFT": 2,
+            "RIGHT": 3
+        }
+
         if(self.feared_state == True):
-            screen.blit(self.frames[1], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
+            screen.blit(self.frames[4], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
         else:
-            screen.blit(self.frames[0], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
+            screen.blit(self.frames[direction_mapping[self.direction]], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))

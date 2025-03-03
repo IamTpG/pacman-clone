@@ -42,6 +42,8 @@ clyde_starting_position = (15, 19)
 inky_starting_position = (13, 19)
 pinky_starting_position = (17, 19)
 
+starting_positions = [pacman_starting_position, blinky_starting_position, clyde_starting_position, inky_starting_position, pinky_starting_position]
+
 pacman = pacman_m.Pacman(pacman_starting_position, "NONE")
 blinky = ghosts.Ghost(blinky_starting_position, "UP", "blinky")
 clyde = ghosts.Ghost(clyde_starting_position, "UP", "clyde")
@@ -77,26 +79,17 @@ while running:
     pinky.update(tilemap.tilemap, pacman)
 
     # check collision
-    if pacman.checkCollision(ghosts_list):
-        for ghost in ghosts_list:
-            if not ghost.feared_state:
-                if pacman.lives == 0:
-                    running = False
-                pacman.resetPosition(pacman_starting_position, "DOWN")
-                blinky.resetPosition(blinky_starting_position, "UP")
-                clyde.resetPosition(clyde_starting_position, "UP")
-                inky.resetPosition(inky_starting_position, "UP")
-                pinky.resetPosition(pinky_starting_position, "UP")
-                start = False
-                break
+    if(pacman.checkCollision(ghosts_list, starting_positions)):
+        print("lmao ur so bad on god frfr")
+        running = False
 
     # render objects
     tilemap.render(screen)
-    pacman.render(screen, tilemap)
     blinky.render(screen)
     clyde.render(screen)
     inky.render(screen)
     pinky.render(screen)
+    pacman.render(screen, tilemap)
 
     # flip() the display to put your work on screen
     pygame.display.flip()

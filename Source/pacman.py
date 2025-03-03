@@ -2,6 +2,7 @@ import pygame
 
 # local
 import tile_map as TMap
+import ghosts
 
 if __name__ == "__main__":
     print("This is a module, it should not be run standalone!")
@@ -18,19 +19,46 @@ SCREEN_WIDTH = TMap.SCREEN_WIDTH
 
 PACMAN_RADIUS = TMap.PACMAN_RADIUS
 
-def loadPacmanFrames():
-    frame1UP = pygame.image.load("Resource\\pacman-up\\1.png")
-    frame2UP = pygame.image.load("Resource\\pacman-up\\2.png")
-    frame3UP = pygame.image.load("Resource\\pacman-up\\3.png")
-    frame1DOWN = pygame.image.load("Resource\\pacman-down\\1.png")
-    frame2DOWN = pygame.image.load("Resource\\pacman-down\\2.png")
-    frame3DOWN = pygame.image.load("Resource\\pacman-down\\3.png")
-    frame1LEFT = pygame.image.load("Resource\\pacman-left\\1.png")
-    frame2LEFT = pygame.image.load("Resource\\pacman-left\\2.png")
-    frame3LEFT = pygame.image.load("Resource\\pacman-left\\3.png")
-    frame1RIGHT = pygame.image.load("Resource\\pacman-right\\1.png")
-    frame2RIGHT = pygame.image.load("Resource\\pacman-right\\2.png")
-    frame3RIGHT = pygame.image.load("Resource\\pacman-right\\3.png")
+PACMAN_SPEED = TMap.PACMAN_SPEED
+GHOST_SPEED = TMap.GHOST_SPEED
+
+SCALING_FACTOR = 2.3
+
+def loadPacmanDeathFrames():
+    frame1 = pygame.image.load("Resource\\pacman\\death_animation\\death1.png")
+    frame2 = pygame.image.load("Resource\\pacman\\death_animation\\death2.png")
+    frame3 = pygame.image.load("Resource\\pacman\\death_animation\\death3.png")
+    frame4 = pygame.image.load("Resource\\pacman\\death_animation\\death4.png")
+    frame5 = pygame.image.load("Resource\\pacman\\death_animation\\death5.png")
+    frame6 = pygame.image.load("Resource\\pacman\\death_animation\\death6.png")
+    frame7 = pygame.image.load("Resource\\pacman\\death_animation\\death7.png")
+    frame8 = pygame.image.load("Resource\\pacman\\death_animation\\death8.png")
+    frame9 = pygame.image.load("Resource\\pacman\\death_animation\\death9.png")
+    frame10 = pygame.image.load("Resource\\pacman\\death_animation\\death10.png")
+    frame11 = pygame.image.load("Resource\\pacman\\death_animation\\death11.png")
+
+    frames = [
+        frame1, frame2, frame3, frame4, frame5, frame6, frame7, frame8, frame9, frame10, frame11
+    ]
+
+    for i in range(11):
+        frames[i] = pygame.transform.scale(frames[i], (PACMAN_RADIUS * SCALING_FACTOR, PACMAN_RADIUS * SCALING_FACTOR))
+
+    return frames
+
+def loadPacmanMovementFrames():
+    frame1UP = pygame.image.load("Resource\\pacman\\movement_animation\\up\\1.png")
+    frame2UP = pygame.image.load("Resource\\pacman\\movement_animation\\up\\2.png")
+    frame3UP = pygame.image.load("Resource\\pacman\\movement_animation\\up\\3.png")
+    frame1DOWN = pygame.image.load("Resource\\pacman\\movement_animation\\down\\1.png")
+    frame2DOWN = pygame.image.load("Resource\\pacman\\movement_animation\\down\\2.png")
+    frame3DOWN = pygame.image.load("Resource\\pacman\\movement_animation\\down\\3.png")
+    frame1LEFT = pygame.image.load("Resource\\pacman\\movement_animation\\left\\1.png")
+    frame2LEFT = pygame.image.load("Resource\\pacman\\movement_animation\\left\\2.png")
+    frame3LEFT = pygame.image.load("Resource\\pacman\\movement_animation\\left\\3.png")
+    frame1RIGHT = pygame.image.load("Resource\\pacman\\movement_animation\\right\\1.png")
+    frame2RIGHT = pygame.image.load("Resource\\pacman\\movement_animation\\right\\2.png")
+    frame3RIGHT = pygame.image.load("Resource\\pacman\\movement_animation\\right\\3.png")
 
     frames = [[
                 frame1UP, frame2UP, frame3UP
@@ -42,8 +70,6 @@ def loadPacmanFrames():
                 frame1RIGHT, frame2RIGHT, frame3RIGHT
             ]
         ]
-
-    SCALING_FACTOR = 2
     
     for i in range(4):
         for j in range(3):
@@ -67,9 +93,16 @@ def loadPacmanSound():
 
 class Pacman:
     def __init__(self, starting_postion, direction):
+        # load frames
+        self.movement_frames = loadPacmanMovementFrames()
+        self.death_frames = loadPacmanDeathFrames()
+        
         # animation
-        self.frames = loadPacmanFrames()
-        self.frame_counter = 0 # used to cycle through frames
+        self.MAX_DEATH_FRAMES_DURATION = 12
+        self.death_frames_counter = 0 # used to cycle through death frames
+
+        self.MAX_MOVEMENT_FRAMES_DURATION = 5
+        self.movement_frame_counter = 0 # used to cycle through frames
         self.sound = loadPacmanSound()
         self.sound_index = 0 # used to play sound at intervals
 
@@ -82,6 +115,7 @@ class Pacman:
         self.queue_time = self.MAX_QUEUE_TIME
 
         # stuff
+        self.dead = False
         self.lives = 3
         self.direction = direction
         self.speed = 2 
@@ -119,13 +153,31 @@ class Pacman:
             return True
         return False
 
-    def checkCollision(self, ghosts : list):
-        if any(self.x == ghost.x and self.y == ghost.y for ghost in ghosts):
+    def checkCollision(self, ghosts : list, starting_positions : list):
+        if any(self.x == ghost.x and self.y == ghost.y for ghost in ghosts) and self.dead == False:
             self.lives -= 1
             self.sound[1].stop()
             self.sound[0].play()
-            return True
-        return False
+            self.dead = True
+            if(self.lives == 0):
+                return True
+            return False
+        
+        if self.dead == True and self.death_frames_counter == 1:
+            self.speed = 0
+            for ghost in ghosts:
+                ghost.freeze_state = True
+                ghost.freeze()
+            return False
+        
+        if self.dead == True and self.death_frames_counter == self.MAX_DEATH_FRAMES_DURATION * 10:
+            self.resetPosition(starting_positions[0], "NONE")
+            self.speed = PACMAN_SPEED
+            for i in range(4):
+                ghosts[i].resetPosition(starting_positions[i + 1], "UP")
+                ghosts[i].unfreeze()
+                ghosts[i].freeze_state = False
+            return False
 
     def canTurn(self, tile_map, wanted_direction):
         if wanted_direction == "NONE" or wanted_direction == self.direction:
@@ -134,7 +186,7 @@ class Pacman:
         return not self.checkObstructionDirection(tile_map, wanted_direction)
 
     def update(self, tile_map):
-        DEBUG = True
+        DEBUG = False
         if (DEBUG): 
             print("Tile Map Cords: X: " + str(self.x) + " Y: " + str(self.y) + 
                 " | Queue Turn: " + self.queue_turn +
@@ -202,27 +254,33 @@ class Pacman:
             "NONE" : 1
         }
 
-        # starting frame
-        if(self.direction == "NONE"): 
-            screen.blit(self.frames[direction_mapping[self.direction]][0], (self.display_x - PACMAN_RADIUS, self.display_y - PACMAN_RADIUS))
-            return
+        frame_index = (self.movement_frame_counter // self.MAX_MOVEMENT_FRAMES_DURATION) % 3  # Cycles between frame 1 2 and 3
+        if(self.dead == False):
+            if(self.direction == "NONE"): 
+                screen.blit(self.movement_frames[direction_mapping[self.direction]][0], (self.display_x - PACMAN_RADIUS, self.display_y - PACMAN_RADIUS))
+                return
 
-        # Draws open mouth if obstructed
-        if(self.checkObstructionDirection(tilemap.tilemap, self.direction) == True):   self.frame_counter = 0
+            # Draws open mouth if obstructed
+            if(self.checkObstructionDirection(tilemap.tilemap, self.direction) == True):   self.movement_frame_counter = 0
 
-        FRAME_DURATION = 8 
-        frame_index = (self.frame_counter // FRAME_DURATION) % 3  # Cycles between frame 1 2 and 3
+            screen.blit(self.movement_frames[direction_mapping[self.direction]][frame_index], (self.display_x - PACMAN_RADIUS, self.display_y - PACMAN_RADIUS))
 
-        screen.blit(self.frames[direction_mapping[self.direction]][frame_index], (self.display_x - PACMAN_RADIUS, self.display_y - PACMAN_RADIUS))
+            # only increment frame counter if not obstructed
+            if not self.checkObstructionDirection(tilemap.tilemap, self.direction):
+                self.movement_frame_counter = (self.movement_frame_counter + 1) % (self.MAX_MOVEMENT_FRAMES_DURATION * 3)
 
-        # only increment frame counter if not obstructed
-        if not self.checkObstructionDirection(tilemap.tilemap, self.direction):
-            self.frame_counter = (self.frame_counter + 1) % (FRAME_DURATION * 3)
+            SOUND_INTERVAL = 36
 
-        SOUND_INTERVAL = 36
-
-        if not self.checkObstructionDirection(tilemap.tilemap, self.direction):
-            self.sound_index += 1
-            if(self.sound_index == SOUND_INTERVAL):
-                self.sound[1].play()
-                self.sound_index = 0
+            if not self.checkObstructionDirection(tilemap.tilemap, self.direction):
+                self.sound_index += 1
+                if(self.sound_index == SOUND_INTERVAL):
+                    self.sound[1].play()
+                    self.sound_index = 0
+        else:
+            frame_index = (self.death_frames_counter // self.MAX_DEATH_FRAMES_DURATION) % 11
+            screen.blit(self.death_frames[frame_index], (self.display_x - PACMAN_RADIUS, self.display_y - PACMAN_RADIUS))
+            self.death_frames_counter += 1
+            if(frame_index == 10):
+                self.dead = False
+                self.death_frames_counter = 0
+                self.frame_counter = 0

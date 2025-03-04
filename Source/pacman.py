@@ -177,6 +177,7 @@ class Pacman:
         if self.dead == True and self.death_frames_counter == self.MAX_DEATH_FRAMES_DURATION * 10:
             self.resetPosition(starting_positions[0], "NONE")
             self.speed = PACMAN_SPEED
+            self.lock_turn_time = 0
             for i in range(4):
                 ghosts[i].resetPosition(starting_positions[i + 1], "UP")
                 ghosts[i].unfreeze()
@@ -195,7 +196,8 @@ class Pacman:
             print("Tile Map Cords: X: " + str(self.x) + " Y: " + str(self.y) + 
                 " | Queue Turn: " + self.queue_turn +
                 " | Direction: " + self.direction +
-                " | Obstruction: " + str(self.checkObstructionDirection(tile_map, self.direction)))
+                " | Obstruction: " + str(self.checkObstructionDirection(tile_map, self.direction)) + 
+                " | Lock Turn Time: " + str(self.lock_turn_time))
         
         # reset queue turn if time runs out
         if(self.queue_time == 0):

@@ -112,7 +112,7 @@ while running:
             if (event.key == pygame.constants.K_ESCAPE):
                 running = False
 
-            if (event.key in input_mapping and pacman.lock_turn_time == 0):
+            if (event.key in input_mapping and pacman.lock_turn_time == 0 and not pacman.dead):
                 pacman.queue_turn = input_mapping[event.key]
                 pacman.queue_time = pacman.MAX_QUEUE_TIME
 
@@ -142,7 +142,7 @@ while running:
     pygame.display.flip()
 
     # fill the screen with a color to wipe away anything from last frame
-    if(not start):
+    if(not start or not enable_intro):
         screen.fill("black")
 
     # display game info

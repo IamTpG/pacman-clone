@@ -104,7 +104,8 @@ class Pacman:
         self.MAX_MOVEMENT_FRAMES_DURATION = 5
         self.movement_frame_counter = 0 # used to cycle through frames
         self.sound = loadPacmanSound()
-        self.sound_index = 0 # used to play sound at intervals
+        self.sound_index = 0 
+        self.stopping_counter = 0
 
         # used to lock turning for a certain amount of time
         self.lock_turn_time = 0 
@@ -154,7 +155,10 @@ class Pacman:
         return False
 
     def checkCollision(self, ghosts : list, starting_positions : list):
-        if any(self.x == ghost.x and self.y == ghost.y for ghost in ghosts) and self.dead == False:
+        COLLISION_RADIUS = 5
+
+        if any(abs(self.display_x - ghosts.display_x) < COLLISION_RADIUS and 
+               abs(self.display_y - ghosts.display_y) < COLLISION_RADIUS for ghosts in ghosts) and self.dead == False:
             self.lives -= 1
             self.sound[1].stop()
             self.sound[0].play()
@@ -270,12 +274,24 @@ class Pacman:
                 self.movement_frame_counter = (self.movement_frame_counter + 1) % (self.MAX_MOVEMENT_FRAMES_DURATION * 3)
 
             SOUND_INTERVAL = 36
+            STOPPING_DELAY = 15
 
             if not self.checkObstructionDirection(tilemap.tilemap, self.direction):
-                self.sound_index += 1
-                if(self.sound_index == SOUND_INTERVAL):
+                self.stopping_counter = 0
+                if self.sound_index == 0:  
                     self.sound[1].play()
-                    self.sound_index = 0
+
+                self.sound_index += 1
+
+                if self.sound_index >= SOUND_INTERVAL: 
+                    self.sound[1].play()
+                    self.sound_index = 1  
+            else:
+                self.stopping_counter += 1 
+                if self.stopping_counter >= STOPPING_DELAY:
+                    self.sound[1].stop()  
+                    self.sound_index = 0  
+                    self.stopping_counter = 0
         else:
             frame_index = (self.death_frames_counter // self.MAX_DEATH_FRAMES_DURATION) % 11
             screen.blit(self.death_frames[frame_index], (self.display_x - PACMAN_RADIUS, self.display_y - PACMAN_RADIUS))

@@ -71,7 +71,12 @@ def loadGhostFrames(name):
 
 class Ghost:
     def __init__(self, starting_position, direction, name):
+        # private parent class
+        if(type(self) == Ghost):
+            raise Exception("Ghost is an abstract class and cannot be instantiated directly!")
+
         # animation
+        self.name = name
         self.frames = loadGhostFrames(name)
 
         # ghost states
@@ -83,6 +88,7 @@ class Ghost:
         self.feared_time = 0
 
         self.freeze_state = False
+        self.dead = False
 
         # lock turning
         self.lock_turn_time = 0
@@ -116,7 +122,7 @@ class Ghost:
         self.speed = GHOST_SPEED
         self.snapDisplayToGrid()
 
-    def getDirection(self, tile_map, pacman):
+    def getDirection(self, tile_map, pacman, ghost_list):
         possible_turns = {
             "UP": ["LEFT", "RIGHT", "UP"],
             "DOWN": ["LEFT", "RIGHT", "DOWN"],
@@ -126,14 +132,9 @@ class Ghost:
 
         # Filter out invalid turns
         valid_turns = [direction for direction in possible_turns[self.direction] if not self.checkObstructionDirection(tile_map, direction)]
-    
+
         # Return a random valid turn, if no valid turn exist, keep moving straight
         return random.choice(valid_turns) if valid_turns else self.direction
-        
-        '''
-        expanded : set = set()
-        return pathfinders.a_star(tile_map, (self.x, self.y), (pacman.x, pacman.y), expanded)
-        '''
 
     def checkObstructionDirection(self, tile_map, direction):
         if(direction == "NONE"): return False
@@ -151,32 +152,6 @@ class Ghost:
             return True
         return False
 
-    #wip
-    def preventCollisionWithOtherGhosts(self, ghost):
-        '''
-        opposite_direction = {
-            "UP": "DOWN",
-            "DOWN": "UP",
-            "LEFT": "RIGHT",
-            "RIGHT": "LEFT"
-        }
-
-        direction_mapping = {
-            "UP": (0, 1),
-            "DOWN": (0, -1),
-            "LEFT": (1, 0),
-            "RIGHT": (-1, 0)
-        }
-
-        if self.x == ghost.x and self.y == ghost.y:
-            self.direction = opposite_direction[self.direction]
-            self.x = self.x + direction_mapping[opposite_direction[self.direction]][0]
-            self.y = self.y + direction_mapping[opposite_direction[self.direction]][1]
-            ghost.x = ghost.x + direction_mapping[opposite_direction[ghost.direction]][0]
-            ghost.y = ghost.y + direction_mapping[opposite_direction[ghost.direction]][1]
-            self.snapDisplayToGrid()
-        '''
-
     def canTurn(self, tile_map):
         if(self.direction == "NONE"):
             return False
@@ -190,17 +165,17 @@ class Ghost:
 
         return any(not self.checkObstructionDirection(tile_map, direction) for direction in allowed_turns[self.direction])
 
-    def update(self, tile_map, pacman):
+    def update(self, tile_map, pacman, ghost_list):
         if(self.freeze_state == True):
             return
 
         if(self.canTurn(tile_map) == True and self.lock_turn_time == 0):
-            self.direction = self.getDirection(tile_map, pacman)
+            self.direction = self.getDirection(tile_map, pacman, ghost_list)
             self.lock_turn_time = 5
 
         if (self.checkObstructionDirection(tile_map, self.direction)):
             self.snapDisplayToGrid()
-            self.direction = self.getDirection(tile_map, pacman)
+            self.direction = self.getDirection(tile_map, pacman, ghost_list)
         
         VERTICAL_OFFSET = 3
         HORIZONTAL_OFFSET = 2
@@ -220,12 +195,12 @@ class Ghost:
                 if(self.display_y % TILE_SIZE == VERTICAL_OFFSET):
                     self.x += update_direction[self.direction][2]
                     self.y += update_direction[self.direction][3]
-                    self.lock_turn_time -= 1
+                    if self.lock_turn_time > 0: self.lock_turn_time -= 1
             if(self.direction == "LEFT" or self.direction == "RIGHT"):
                 if(self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
                     self.x += update_direction[self.direction][2]
                     self.y += update_direction[self.direction][3]
-                    self.lock_turn_time -= 1
+                    if self.lock_turn_time > 0: self.lock_turn_time -= 1
 
         if (self.display_x < SCREEN_OFFSET + self.radius and self.direction == "LEFT"): 
             self.display_x = SCREEN_WIDTH
@@ -252,5 +227,39 @@ class Ghost:
 
         if(self.feared_state == True):
             screen.blit(self.frames[4], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
+        elif(self.dead == True):
+            screen.blit(self.frames[5], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
         else:
             screen.blit(self.frames[direction_mapping[self.direction]], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
+        
+class Blinky(Ghost):
+    def __init__(self, starting_position, direction):
+        super().__init__(starting_position, direction, "blinky")
+    
+    #override with specific behavior
+    def getDirection(self, tile_map, pacman, other_ghosts):
+        return super().getDirection(tile_map, pacman, other_ghosts) #using parent class behavior, remove this when adding specific behavior
+
+class Inky(Ghost):
+    def __init__(self, starting_position, direction):
+        super().__init__(starting_position, direction, "inky")
+    
+    #override with specific behavior
+    def getDirection(self, tile_map, pacman, other_ghosts):
+        return super().getDirection(tile_map, pacman, other_ghosts)
+
+class Clyde(Ghost):
+    def __init__(self, starting_position, direction):
+        super().__init__(starting_position, direction, "clyde")
+    
+    #override with specific behavior
+    def getDirection(self, tile_map, pacman, other_ghosts):
+        return super().getDirection(tile_map, pacman, other_ghosts)
+    
+class Pinky(Ghost):
+    def __init__(self, starting_position, direction):
+        super().__init__(starting_position, direction, "pinky")
+    
+    #override with specific behavior
+    def getDirection(self, tile_map, pacman, other_ghosts):
+        return super().getDirection(tile_map, pacman, other_ghosts)

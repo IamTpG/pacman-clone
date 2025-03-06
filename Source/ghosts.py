@@ -122,22 +122,17 @@ class Ghost:
         self.direction = direction
         self.speed = GHOST_SPEED
         self.snapDisplayToGrid()
-    def switch_case(direction):
-        
-        switcher = {
-            (0, -1): "LEFT",
-            (0, 1): "RIGHT",
-            (-1, 0): "UP",
-            (1, 0) : "DOWN"
-        }
-        return switcher.get(direction, "Invalid")  # Default case 
     
-    def getDirection(tile_map,pacman,other_ghost): 
+    
+    def getDirection(self, tile_map, pacman, ghost_list):  
         expanded = set()
-        path = Pfinder.a_star(tile_map,self, pacman,  expanded)  
+        path = Pfinder.a_star(tile_map,(self.y,self.x), (pacman.y,pacman.x),  expanded, ghost_list) 
+        if path is 'NONE' :
+            direction = (0,0)
+            print("No path found")
+            return "STAY"
         direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
-       
-        return switch_case(direction) #1/ tai sao switch case o tren ma bao undefined ?
+        return Pfinder.switch_case(direction) #1/ why switched_case undifined ? - Neidy 
     
     
 
@@ -252,13 +247,20 @@ class Ghost:
         else:
             screen.blit(self.frames[direction_mapping[self.direction]], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
         
-class Blinky(Ghost):
+class Blinky(Ghost): # blinky (red) use A_star search
     def __init__(self, starting_position, direction):
         super().__init__(starting_position, direction, "blinky")
-     
-    #override with specific behavior
-    def getDirection(self, tile_map, pacman, other_ghosts):  
-        return super().getDirection(tile_map, pacman, other_ghosts) #using parent class behavior, remove this when adding specific behavior
+
+    def getDirection(self, tile_map, pacman, ghost_list):  
+        expanded = set()
+        path = Pfinder.a_star(tile_map,(self.y,self.x), (pacman.y,pacman.x),  expanded, ghost_list) 
+        if path is None : 
+            direction = (0,0)
+            print("No path found")
+            return "STAY"
+        direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
+        return Pfinder.switch_case(direction) #1/ why switched_case undifined ? - Neidy 
+
 
 class Inky(Ghost):
     def __init__(self, starting_position, direction):
@@ -281,5 +283,14 @@ class Pinky(Ghost):
         super().__init__(starting_position, direction, "pinky")
     
     #override with specific behavior
-    def getDirection(self, tile_map, pacman, other_ghosts):
-        return super().getDirection(tile_map, pacman, other_ghosts)
+    def getDirection(self, tile_map, pacman, ghost_list):  
+        visited = set()
+        expanded_list = [(self.y,self.x)] #expanded is a list,  i didnt quite understand the meaning of this list yet - Neidy 
+        path = Pfinder.dfs_recursive_ordered(tile_map,(self.y,self.x),visited, (pacman.y,pacman.x),  expanded_list, ghost_list)   
+        if path is None :
+            direction = (0,0)
+            print("No path found")
+            return "STAY"
+        print("PATH FOUND!")
+        direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
+        return Pfinder.switch_case(direction) #1/ why switched_case undifined ? - Neidy 

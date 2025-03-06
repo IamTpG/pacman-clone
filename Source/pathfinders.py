@@ -1,5 +1,8 @@
 import heapq
 
+if __name__ == '__main__':
+    print("This is a module. Not meant to be run standalone.")
+
 # this will hold the pathfinding algorithms like bfs, dfs, a*, etc.
 def dfs_recursive_ordered(grid, start, visited, goal,expanded_list, ghost_list):
     rows, cols = len(grid), len(grid[0])
@@ -88,6 +91,3 @@ def switch_case(direction):
         (1, 0) : "DOWN"
     }
     return switcher.get(direction, "Invalid")  # Default case 
-
-if __name__ == '__main__':
-    print("This is a module. Not meant to be run standalone.")

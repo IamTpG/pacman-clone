@@ -193,14 +193,6 @@ class Pacman:
         return not self.checkObstructionDirection(tile_map, wanted_direction)
 
     def update(self, tile_map):
-        DEBUG = False
-        if (DEBUG): 
-            print("Tile Map Cords: X: " + str(self.x) + " Y: " + str(self.y) + 
-                " | Queue Turn: " + self.queue_turn +
-                " | Direction: " + self.direction +
-                " | Obstruction: " + str(self.checkObstructionDirection(tile_map, self.direction)) + 
-                " | Lock Turn Time: " + str(self.lock_turn_time))
-        
         # reset queue turn if time runs out
         if(self.queue_time == 0):
             self.queue_turn = "NONE"

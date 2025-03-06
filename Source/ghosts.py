@@ -122,7 +122,6 @@ class Ghost:
         self.speed = GHOST_SPEED
         self.snapDisplayToGrid()
     
-    '''
     def getDirection(self, tile_map, pacman, ghost_list):  
         expanded = set()
         path = Pfinder.a_star(tile_map,(self.y,self.x), (pacman.y,pacman.x),  expanded, ghost_list) 
@@ -132,9 +131,8 @@ class Ghost:
             return "STAY"
         direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
         return Pfinder.switch_case(direction) #1/ why switched_case undifined ? - Neidy 
-    '''
 
-    def getRandomDirection(self, tile_map, pacman, ghost_list):  
+    def getRandomDirection(self, tile_map):  
         possible_turns = {
             "UP": ["LEFT", "RIGHT", "UP"],
             "DOWN": ["LEFT", "RIGHT", "DOWN"],
@@ -196,7 +194,7 @@ class Ghost:
             "UP": (0, -self.speed, 0, -1),
             "DOWN": (0, self.speed, 0, 1),
             "LEFT": (-self.speed, 0, -1, 0),
-            "RIGHT": (self.speed, 0, 1, 0)  
+            "RIGHT": (self.speed, 0, 1, 0)
         }
 
         if (self.direction in update_direction):
@@ -255,50 +253,47 @@ class Blinky(Ghost): # blinky (red) use A_star search
 
     def getDirection(self, tile_map, pacman, ghost_list):  
         if(self.state == "SCATTER" or self.state == "FEARED"):
-            return super().getRandomDirection(tile_map, pacman, ghost_list)
+            return super().getRandomDirection(tile_map)
         else:
             expanded = set()
             path = Pfinder.a_star(tile_map,(self.y,self.x), (pacman.y,pacman.x),  expanded, ghost_list) 
             if path is None : 
                 direction = (0,0)
-                #debug print("No path found")
-                return "STAY"
+                return self.direction #keep moving in the same direction if no path is found
             direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
-            return Pfinder.switch_case(direction) #1/ why switched_case undifined ? - Neidy 
+            return Pfinder.switch_case(direction) 
 
 class Inky(Ghost):
     def __init__(self, starting_position, direction, starting_scatter_time):
         super().__init__(starting_position, direction, "inky", starting_scatter_time)
     
     #override with specific behavior
-    def getDirection(self, tile_map, pacman, ghosts_list):
-        return super().getRandomDirection(tile_map, pacman, ghosts_list)
+    def getDirection(self, tile_map, pacman, ghost_list):
+        return super().getRandomDirection(tile_map)
 
 class Clyde(Ghost):
     def __init__(self, starting_position, direction, starting_scatter_time):
         super().__init__(starting_position, direction, "clyde", starting_scatter_time)
     
     #override with specific behavior
-    def getDirection(self, tile_map, pacman, ghosts_list):
-        return super().getRandomDirection(tile_map, pacman, ghosts_list)
+    def getDirection(self, tile_map, pacman, ghost_list):
+        return super().getRandomDirection(tile_map)
     
-class Pinky(Ghost):
+class Pinky(Ghost): # pinky (pink) use DFS search
     def __init__(self, starting_position, direction, starting_scatter_time):
         super().__init__(starting_position, direction, "pinky", starting_scatter_time)
     
     #override with specific behavior
     def getDirection(self, tile_map, pacman, ghost_list):  
         if(self.state == "SCATTER" or self.state == "FEARED"):
-            return super().getRandomDirection(tile_map, pacman, ghost_list)
+            return super().getRandomDirection(tile_map)
         else:
             visited = set()
             expanded_list = [(self.y,self.x)] #expanded is a list,  i didnt quite understand the meaning of this list yet - Neidy 
             path = Pfinder.dfs_recursive_ordered(tile_map,(self.y,self.x),visited, (pacman.y,pacman.x),  expanded_list, ghost_list)   
             if path is None :
                 direction = (0,0)
-                #debug print("No path found")
-                return "STAY"
-            # debug print("PATH FOUND!")
+                return self.direction #keep moving in the same direction if no path is found
             direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
-            return Pfinder.switch_case(direction) #1/ why switched_case undifined ? - Neidy 
+            return Pfinder.switch_case(direction) 
         

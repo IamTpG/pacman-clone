@@ -259,7 +259,7 @@ class Blinky(Ghost): # blinky (red) use A_star search
             "RIGHT": "LEFT"
         }
 
-        if(self.state == "SCATTER" or self.state == "SCARED"):
+        if (self.state == "SCATTER" or self.state == "SCARED"):
             return super().getRandomDirection(tile_map)
         else:
             expanded = set()
@@ -274,21 +274,63 @@ class Blinky(Ghost): # blinky (red) use A_star search
                 return opposite_direction[Pfinder.switch_case(direction)]
                 #run away from pacman if scared
 
-class Inky(Ghost):
+class Inky(Ghost): # inky (blue) use BFS search
     def __init__(self, starting_position, direction, starting_scatter_time):
         super().__init__(starting_position, direction, "inky", starting_scatter_time)
     
-    #override with specific behavior
-    def getDirection(self, tile_map, pacman, ghost_list):
-        return super().getRandomDirection(tile_map)
+    def getDirection(self, tile_map, pacman, ghost_list):  
+        opposite_direction = {
+            "UP": "DOWN",
+            "DOWN": "UP",
+            "LEFT": "RIGHT",
+            "RIGHT": "LEFT"
+        }
 
-class Clyde(Ghost):
+        if (self.state == "SCATTER" or self.state == "SCARED"):
+            return super().getRandomDirection(tile_map)
+        else:
+            expanded = set()
+            path = Pfinder.bfs(tile_map, (self.y,self.x), (pacman.y,pacman.x), expanded, ghost_list) 
+            if path is None:
+                direction = (0, 0)
+                return self.direction # keep moving in the same direction if no path is found
+            
+            direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
+
+            if (not self.state == "SCARED"):
+                return Pfinder.switch_case(direction)
+            else:
+                #run away from pacman if scared
+                return opposite_direction[Pfinder.switch_case(direction)]
+
+class Clyde(Ghost): # clyde (orange) use UCS search
     def __init__(self, starting_position, direction, starting_scatter_time):
         super().__init__(starting_position, direction, "clyde", starting_scatter_time)
     
-    #override with specific behavior
-    def getDirection(self, tile_map, pacman, ghost_list):
-        return super().getRandomDirection(tile_map)
+    def getDirection(self, tile_map, pacman, ghost_list):  
+        opposite_direction = {
+            "UP": "DOWN",
+            "DOWN": "UP",
+            "LEFT": "RIGHT",
+            "RIGHT": "LEFT"
+        }
+
+        if (self.state == "SCATTER" or self.state == "SCARED"):
+            return super().getRandomDirection(tile_map)
+        else:
+            expanded = set()
+            path = Pfinder.ucs(tile_map, (self.y,self.x), (pacman.y,pacman.x), expanded, ghost_list) 
+            if path is None:
+                direction = (0, 0)
+                return self.direction # keep moving in the same direction if no path is found
+            
+            direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
+
+            if (not self.state == "SCARED"):
+                return Pfinder.switch_case(direction)
+            else:
+                #run away from pacman if scared
+                return opposite_direction[Pfinder.switch_case(direction)]
     
 class Pinky(Ghost): # pinky (pink) use DFS search
     def __init__(self, starting_position, direction, starting_scatter_time):

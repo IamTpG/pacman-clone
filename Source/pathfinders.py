@@ -1,9 +1,127 @@
 import heapq
+from collections import deque
 
 if __name__ == '__main__':
     print("This is a module. Not meant to be run standalone.")
 
 # this will hold the pathfinding algorithms like bfs, dfs, a*, etc.
+def bfs(grid, start, goal, expanded, ghost_list):
+    #initialize variable
+    rows, cols = len(grid), len(grid[0])
+    # Directions: left, right, up, down
+    directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+
+    #used for tracing back the path
+    trace = [[(-1, -1) for i in range(0, cols + 1)] for j in range(0, rows + 1)]
+    found = False
+    
+    #have a list act as an heap priority queue
+    q = deque()
+    q.append(start)
+    
+    #a set of expanded node
+    expanded = set()
+    
+    #main process
+    while q and (not found):
+        u = q.popleft()
+
+        for dx, dy in directions:
+            v = (u[0] + dx, u[1] + dy)
+
+            if (v[0] < 1 or v[0] > rows):
+                continue
+            if (v[1] < 1 or v[1] > cols):
+                continue
+            if (grid[v[0]][v[1]] != -1):
+                continue
+            if (v in expanded):
+                continue
+
+            trace[v[0]][v[1]] = u
+            
+            # early stopping
+            if (v == goal):
+                found = True
+                break
+
+            expanded.add(v)
+            q.append(v)
+
+    if (found == False):
+        return None
+    
+    # tracing back the path
+    u = goal
+    path = [goal]
+    while (u != start):
+        u = trace[u[0]][u[1]]
+        path.append(u)
+
+    path.reverse()
+    return path
+
+def ucs(grid, start, goal, expanded, ghost_list):
+    #initialize variable
+    rows, cols = len(grid), len(grid[0])
+    # Directions: left, right, up, down
+    directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+
+    #d[x][y] = min distance from start to (x, y)
+    d = [[int(1e9) for i in range(0, cols + 1)] for j in range(0, rows + 1)]
+
+    #used for tracing back the path
+    trace = [[(-1, -1) for i in range(0, cols + 1)] for j in range(0, rows + 1)]
+    found = False
+    
+    #have a list act as an heap priority queue
+    q = [(0, start)]
+    heapq.heapify(q)
+    d[start[0]][start[1]] = 0
+    
+    #a set of expanded node
+    expanded = set()
+    
+    #main process
+    while q and (not found):
+        (wu, u) = heapq.heappop(q)
+
+        if (u == goal):
+            found = True
+            break
+
+        for dx, dy in directions:
+            v = (u[0] + dx, u[1] + dy)
+            uv = 1 # distance between u and v is always 1
+
+            if (v[0] < 1 or v[0] > rows):
+                continue
+            if (v[1] < 1 or v[1] > cols):
+                continue
+            if (grid[v[0]][v[1]] != -1):
+                continue
+            if (v in expanded):
+                continue
+
+            if (d[v[0]][v[1]] > d[u[0]][u[1]] + uv):
+                d[v[0]][v[1]] = d[u[0]][u[1]] + uv
+                trace[v[0]][v[1]] = u
+                expanded.add(v)
+                heapq.heappush(q, (d[v[0]][v[1]], v))
+
+    if (found == False):
+        return None
+    
+    # tracing back the path
+    u = goal
+    path = [goal]
+    while (u != start):
+        u = trace[u[0]][u[1]]
+        path.append(u)
+
+    path.reverse()
+    return path
+
 def dfs_recursive_ordered(grid, start, visited, goal,expanded_list, ghost_list):
     rows, cols = len(grid), len(grid[0])
     
@@ -17,7 +135,7 @@ def dfs_recursive_ordered(grid, start, visited, goal,expanded_list, ghost_list):
         return [(start[0],start[1])]
     
     # Directions: left, up, right, down
-    directions = [(0, -1), (-1, 0),(0, 1), (1, 0)]
+    directions = [(0, -1), (-1, 0), (0, 1), (1, 0)]
     # for neighbors of current
     for di, dj in directions:
         ni = di + start[0]
@@ -48,7 +166,6 @@ def a_star(grid, start, goal, expanded, ghost_list):
     #a set of expanded node
     expanded = set()
     
-   
     #main process
     while open_list:
         #take information of current node and check if it was expanded
@@ -76,6 +193,7 @@ def a_star(grid, start, goal, expanded, ghost_list):
                 heapq.heappush(open_list, (new_f, new_g, neighbor, new_path))
     
     return None  # No path found
+
 def find_direction(path): 
 
     direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])

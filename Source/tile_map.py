@@ -107,7 +107,6 @@ def flashText(screen, last_toggle_time, show_text, text, text2):
 
     return last_toggle_time, show_text
 
-
 def ReadMap():
     file = open("Resource\\map\\map.txt")
     m = [[0] * MAP_WIDTH]

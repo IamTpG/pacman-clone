@@ -62,6 +62,7 @@ tilemap = TMap.Tilemap("Resource\\map\\map.png")
 READY_TEXT = GAME_FONT.render("READY!", True, (255, 255, 0))
 BLACK_READY_TEXT = GAME_FONT.render("READY!", True, (0, 0, 0))
 intro_sfx = pygame.mixer.Sound("Resource\\sfx\\intro.wav")
+intro_sfx.set_volume(0.5)
 start = True
 enable_intro = True
 
@@ -127,7 +128,7 @@ while running:
     # starting sequence
     if start and enable_intro:
         start = False
-        #intro_sfx.play()
+        intro_sfx.play()
         last_toggle_time = 0
         show_text = True
         while pygame.time.get_ticks() < pausing:

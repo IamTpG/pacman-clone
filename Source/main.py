@@ -2,12 +2,16 @@
 import pygame
 import time
 
-# local
+# initialize pygame
+pygame.init()
+pygame.mixer.init()
+
+# local imports
 import pacman as pacman_m
 import ghosts
 import tile_map as TMap
 
-# Constants
+# constants
 TILE_RESU = TMap.TILE_RESU
 TILE_SIZE = TMap.TILE_SIZE
 
@@ -18,37 +22,63 @@ SCREEN_OFFSET = TMap.SCREEN_OFFSET
 SCREEN_WIDTH = TMap.SCREEN_WIDTH
 SCREEN_HEIGHT = TMap.SCREEN_HEIGHT
 
-# Utils function for reading tilemap
+GAME_FONT = TMap.GAME_FONT
 
-pygame.init()
-pygame.mixer.init()
+# input mapping
+input_mapping = {
+    pygame.constants.K_UP: "UP",
+    pygame.constants.K_DOWN: "DOWN",
+    pygame.constants.K_LEFT: "LEFT",
+    pygame.constants.K_RIGHT: "RIGHT"
+}
 
-intro_sfx = pygame.mixer.Sound("Resource\\sfx\\intro.wav")
-
+# game loop 
 screen = pygame.display.set_mode((SCREEN_WIDTH + SCREEN_OFFSET * 2, SCREEN_HEIGHT + SCREEN_OFFSET * 2))
 clock = pygame.time.Clock()
 running = True
 start = False
 
+# initialize objects
 pacman_starting_position = (15, 28)
 blinky_starting_position = (15, 16)
 clyde_starting_position = (15, 19)
 inky_starting_position = (13, 19)
 pinky_starting_position = (17, 19)
 
+starting_positions = [pacman_starting_position, blinky_starting_position, clyde_starting_position, inky_starting_position, pinky_starting_position]
+
 pacman = pacman_m.Pacman(pacman_starting_position, "NONE")
-blinky = ghosts.Ghost(blinky_starting_position, "UP", "blinky")
-clyde = ghosts.Ghost(clyde_starting_position, "UP", "clyde")
-inky = ghosts.Ghost(inky_starting_position, "UP", "inky")
-pinky = ghosts.Ghost(pinky_starting_position, "UP", "pinky")
+blinky = ghosts.Blinky(blinky_starting_position, "UP")
+clyde = ghosts.Clyde(clyde_starting_position, "UP")
+inky = ghosts.Inky(inky_starting_position, "UP")
+pinky = ghosts.Pinky(pinky_starting_position, "UP")
 
 ghosts_list = [blinky, clyde, inky, pinky]
 
+# load map
 tilemap = TMap.Tilemap("Resource\\map\\map.png")
 
+#starting sequence
+READY_TEXT = GAME_FONT.render("READY!", True, (255, 255, 0))
+BLACK_READY_TEXT = GAME_FONT.render("READY!", True, (0, 0, 0))
+intro_sfx = pygame.mixer.Sound("Resource\\sfx\\intro.wav")
+start = True
+enable_intro = True
+
+# pause time
+pause_time = 4500 #milliseconds #original 4500
+pausing = pygame.time.get_ticks() + pause_time
+
+# weird img files bug
+print("something something all those pngs file are corrupted or sth idk man i just work here")
+print("type \"debugmode\" to enable debug mode")
+
+#debug mode
+enable_debug = False
+key_order = [pygame.K_d, pygame.K_e, pygame.K_b, pygame.K_u, pygame.K_g, pygame.K_m, pygame.K_o, pygame.K_d, pygame.K_e] #[debugmode]
+debug_input_queue = []
+
 while running:
-    # poll for events
-    # pygame.QUIT event means the user clicked X to close your window
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -57,74 +87,70 @@ while running:
             if (event.key == pygame.constants.K_ESCAPE):
                 running = False
 
-            if (event.key == pygame.constants.K_UP and pacman.lock_turn_time == 0):
-                pacman.queue_turn = "UP"
+            if (event.key in input_mapping and pacman.lock_turn_time == 0 and not pacman.dead):
+                pacman.queue_turn = input_mapping[event.key]
                 pacman.queue_time = pacman.MAX_QUEUE_TIME
-            if (event.key == pygame.constants.K_DOWN and pacman.lock_turn_time == 0):
-                pacman.queue_turn = "DOWN"
-                pacman.queue_time = pacman.MAX_QUEUE_TIME
-            if (event.key == pygame.constants.K_LEFT and pacman.lock_turn_time == 0):
-                pacman.queue_turn = "LEFT"
-                pacman.queue_time = pacman.MAX_QUEUE_TIME
-            if (event.key == pygame.constants.K_RIGHT and pacman.lock_turn_time == 0):
-                pacman.queue_turn = "RIGHT"
-                pacman.queue_time = pacman.MAX_QUEUE_TIME
-
-            #debug, remove this later
-            if(event.key == pygame.constants.K_SPACE):
-                blinky.feared_state = not blinky.feared_state
-                clyde.feared_state = not clyde.feared_state
-                inky.feared_state = not inky.feared_state
-                pinky.feared_state = not pinky.feared_state
-
-                blinky.feared_time = blinky.MAX_FEARED_TIME
-                clyde.feared_time = clyde.MAX_FEARED_TIME
-                inky.feared_time = inky.MAX_FEARED_TIME
-                pinky.feared_time = pinky.MAX_FEARED_TIME
 
     # update pacman
     pacman.update(tilemap.tilemap)
 
-    # check collision
-    if pacman.checkCollision(ghosts_list):
-        for ghost in ghosts_list:
-            if not ghost.feared_state:
-                if pacman.lives == 0:
-                    running = False
-                pacman.reset(pacman_starting_position, "NONE")
-                blinky.reset(blinky_starting_position, "UP")
-                clyde.reset(clyde_starting_position, "UP")
-                inky.reset(inky_starting_position, "UP")
-                pinky.reset(pinky_starting_position, "UP")
-                start = False
-                break
-    
-    for i in range(4):
-        for j in range(4):
-            if ghosts_list[j] == ghosts_list[i]:
-                continue
-            else:
-                ghosts_list[i].preventCollisionWithOtherGhosts(ghosts_list[j])
-
     # update ghosts
-    blinky.update(tilemap.tilemap)
-    clyde.update(tilemap.tilemap)
-    inky.update(tilemap.tilemap)
-    pinky.update(tilemap.tilemap)
+    blinky.update(tilemap.tilemap, pacman, ghosts_list)
+    clyde.update(tilemap.tilemap, pacman, ghosts_list)
+    inky.update(tilemap.tilemap, pacman, ghosts_list)
+    pinky.update(tilemap.tilemap, pacman, ghosts_list)
 
-    # fill the screen with a color to wipe away anything from last frame
-    screen.fill("black")
+    # check collision
+    if(pacman.checkCollision(ghosts_list, starting_positions)):
+        running = False
 
     # render objects
     tilemap.render(screen)
-    pacman.render(screen, tilemap)
     blinky.render(screen)
     clyde.render(screen)
     inky.render(screen)
     pinky.render(screen)
+    pacman.render(screen, tilemap)
 
     # flip() the display to put your work on screen
     pygame.display.flip()
+
+    # fill the screen with a color to wipe away anything from last frame
+    if(not start or not enable_intro):
+        screen.fill("black")
+
+    # display game info
+    TMap.displayGameInfo(screen, pacman)
+    if(enable_debug):
+        TMap.displayDebugInfo(screen, pacman, ghosts_list)
+
+    # starting sequence
+    if start and enable_intro:
+        start = False
+        #intro_sfx.play()
+        last_toggle_time = 0
+        show_text = True
+        while pygame.time.get_ticks() < pausing:
+            last_toggle_time, show_text = TMap.flashText(screen, last_toggle_time, show_text, READY_TEXT, BLACK_READY_TEXT)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                    break
+
+                if event.type == pygame.KEYDOWN and not enable_debug:
+                    debug_input_queue.append(event.key)
+
+                if len(debug_input_queue) > len(key_order):
+                    debug_input_queue.pop(0)        
+
+                if debug_input_queue == key_order and not enable_debug:
+                    print("DEBUG MODE ENABLED")
+                    enable_debug = True    
+            if not running:
+                break
+
+        if(enable_debug):
+            TMap.enableDebugMode(SCREEN_WIDTH)
 
     FPS = 60
     clock.tick(FPS) 

@@ -1,12 +1,13 @@
+import heapq
+
 # this will hold the pathfinding algorithms like bfs, dfs, a*, etc.
-import heappq
 def dfs_recursive_ordered(grid, current_i, current_j, visited, goal_i,goal_j,expanded): 
     rows, cols = len(grid), len(grid[0])
     
     # Check boundaries and if already visited
     if not (0 <= current_i < rows and 0 <= current_j < cols ) or (current_i, current_j) in visited:
         return None
-    visited.add((current_i, current_j))
+    visited.append((current_i, current_j))
     # if current = finish
     if current_i == goal_i and current_j == goal_j:
         visited.pop()
@@ -26,11 +27,12 @@ def dfs_recursive_ordered(grid, current_i, current_j, visited, goal_i,goal_j,exp
                 if result is not None: 
                     return [(current_i, current_j)] + result
     return None
+
 def heuristic(a, b):
     # Manhattan distance as a heuristic (suitable for 4-directional movement)
     return abs(a[0] - b[0]) + abs(a[1] - b[1]) # Manhattan = |dx| + |dy|
 
-def a_star(grid, start, goal, expanded_set):
+def a_star(grid, start, goal, expanded):
     #initialize variable
     rows, cols = len(grid), len(grid[0])
     # Directions: left, right, up, down
@@ -70,7 +72,7 @@ def a_star(grid, start, goal, expanded_set):
                 new_path = path + [neighbor]
                 heapq.heappush(open_list, (new_f, new_g, neighbor, new_path))
     
-    return None  # No path found
+    return "NONE"  # No path found
 def find_direction(path): 
 
     direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
@@ -86,5 +88,6 @@ def switch_case(direction):
         (1, 0) : "DOWN"
     }
     return switcher.get(direction, "Invalid")  # Default case
+
 if __name__ == '__main__':
     print("This is a module. Not meant to be run standalone.")

@@ -46,8 +46,10 @@ def displayDebugInfo(screen, pacman, ghosts_list):
     debug_text = GAME_FONT.render("... DEBUG MODE ...", True, (255, 0, 0))
     screen.blit(debug_text, (SCREEN_OFFSET * 54, SCREEN_OFFSET * 3.8))
 
+    STATE_TEXT = GAME_FONT_SMALL.render(". STATE .", True, (255, 255, 255))
     POSITION_TEXT = GAME_FONT_SMALL.render(". POSITION .", True, (255, 255, 255))
-    screen.blit(POSITION_TEXT, (SCREEN_OFFSET * 58.5, SCREEN_OFFSET * 6.8))
+    screen.blit(POSITION_TEXT, (SCREEN_OFFSET * 50.5, SCREEN_OFFSET * 6.8))
+    screen.blit(STATE_TEXT, (SCREEN_OFFSET * 65.5, SCREEN_OFFSET * 6.8))
 
     #display pacman info
     PACMAN_NAME = GAME_FONT_SMALL.render("PACMAN", True, (255, 255, 0))
@@ -57,9 +59,11 @@ def displayDebugInfo(screen, pacman, ghosts_list):
                                             ("0" if pacman.y < 10 else "") + #single digit is padded
                                             str(pacman.y), True, (255, 255, 255))
     
-    screen.blit(PACMAN_NAME, (SCREEN_OFFSET * 54, SCREEN_OFFSET * 8.8))
-    screen.blit(PACMAN_POS_TEXT, (SCREEN_OFFSET * 59, SCREEN_OFFSET * 8.8))
-
+    screen.blit(PACMAN_NAME, (SCREEN_OFFSET * 49, SCREEN_OFFSET * 8.8))
+    screen.blit(PACMAN_POS_TEXT, (SCREEN_OFFSET * 54, SCREEN_OFFSET * 8.8))
+    screen.blit(GAME_FONT_SMALL.render(("ALIVE" if pacman.dead == False else "DEAD"), True, (255, 255, 255)), 
+                (SCREEN_OFFSET * 67, SCREEN_OFFSET * 8.8))
+   
     #display ghosts info
     for i in range(0, len(ghosts_list)):
         GHOST_NAME = GAME_FONT_SMALL.render(str(ghosts_list[i].name), True, ghost_colors[ghosts_list[i].name])
@@ -68,18 +72,10 @@ def displayDebugInfo(screen, pacman, ghosts_list):
                                                 str(ghosts_list[i].x) + ", " + 
                                                 ("0" if ghosts_list[i].y < 10 else "") + #single digit is padded
                                                 str(ghosts_list[i].y), True, (255, 255, 255))
-        
-        screen.blit(GHOST_NAME, (SCREEN_OFFSET * 54, SCREEN_OFFSET * (12.8 + i * 2)))
-        screen.blit(GHOST_POS_TEXT, (SCREEN_OFFSET * 59, SCREEN_OFFSET * (12.8 + i * 2)))
-
-    #display other ghosts info
-    PATH_SEARCHED_TEXT = GAME_FONT_SMALL.render(". PATH SEARCHED .", True, (255, 255, 255))
-    screen.blit(PATH_SEARCHED_TEXT, (SCREEN_OFFSET * 57, SCREEN_OFFSET * 21.8))
-
-    for i in range(0, len(ghosts_list)):
-        screen.blit(GAME_FONT_SMALL.render("EMPTY", True, (255, 255, 255)), (SCREEN_OFFSET * 54, SCREEN_OFFSET * (23.8 + i * 2)))
-
-    # add more ghost info here
+        GHOST_STATE_TEXT = GAME_FONT_SMALL.render(ghosts_list[i].state, True, (255, 255, 255))
+        screen.blit(GHOST_NAME, (SCREEN_OFFSET * 49, SCREEN_OFFSET * (12.8 + i * 2)))
+        screen.blit(GHOST_POS_TEXT, (SCREEN_OFFSET * 54, SCREEN_OFFSET * (12.8 + i * 2)))
+        screen.blit(GHOST_STATE_TEXT, (SCREEN_OFFSET * 67, SCREEN_OFFSET * (12.8 + i * 2)))
 
 def displayGameInfo(screen, pacman):
     #display pacman lives

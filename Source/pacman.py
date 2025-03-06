@@ -171,7 +171,7 @@ class Pacman:
         if self.dead == True and self.death_frames_counter == 1:
             self.speed = 0
             for ghost in ghosts:
-                ghost.freeze_state = True
+                ghost.state = "FROZEN"
                 ghost.freeze()
             return False
         
@@ -182,7 +182,8 @@ class Pacman:
             for i in range(4):
                 ghosts[i].resetPosition(starting_positions[i + 1], "UP")
                 ghosts[i].unfreeze()
-                ghosts[i].freeze_state = False
+                ghosts[i].state = "SCATTER"
+                ghosts[i].scatter_time = ghosts[i].MAX_SCATTER_TIME
             return False
 
     def canTurn(self, tile_map, wanted_direction):

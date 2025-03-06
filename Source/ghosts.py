@@ -71,7 +71,7 @@ def loadGhostFrames(name):
     return ghost_frames[name]
 
 class Ghost:
-    def __init__(self, starting_position, direction, name):
+    def __init__(self, starting_position, direction, name, starting_state):
         # private parent class
         if(type(self) == Ghost):
             raise Exception("Ghost is an abstract class and cannot be instantiated directly!")
@@ -81,15 +81,14 @@ class Ghost:
         self.frames = loadGhostFrames(name)
 
         # ghost states
-        self.scatter_state = False
-        self.scatter_time = 50
-
-        self.feared_state = False
+        self.all_possible_states = ["NONE", "FEARED", "DEAD", "SCATTER", "CHASE"]
+        self.state = starting_state[1]
+        
         self.MAX_FEARED_TIME = 300
-        self.feared_time = 0
+        self.MAX_SCATTER_TIME = starting_state[0]
 
-        self.freeze_state = False
-        self.dead = False
+        self.scatter_time = starting_state[0]
+        self.feared_time = 0
 
         # lock turning
         self.lock_turn_time = 0
@@ -123,21 +122,19 @@ class Ghost:
         self.speed = GHOST_SPEED
         self.snapDisplayToGrid()
     
-    
+    '''
     def getDirection(self, tile_map, pacman, ghost_list):  
         expanded = set()
         path = Pfinder.a_star(tile_map,(self.y,self.x), (pacman.y,pacman.x),  expanded, ghost_list) 
         if path is 'NONE' :
             direction = (0,0)
-            print("No path found")
+            # debug print("No path found")
             return "STAY"
         direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
         return Pfinder.switch_case(direction) #1/ why switched_case undifined ? - Neidy 
-    
-    
+    '''
 
-    def getDirection2(self, tile_map, pacman, ghost_list):  
-        
+    def getRandomDirection(self, tile_map, pacman, ghost_list):  
         possible_turns = {
             "UP": ["LEFT", "RIGHT", "UP"],
             "DOWN": ["LEFT", "RIGHT", "DOWN"],
@@ -181,12 +178,12 @@ class Ghost:
         return any(not self.checkObstructionDirection(tile_map, direction) for direction in allowed_turns[self.direction])
 
     def update(self, tile_map, pacman, ghost_list):
-        if(self.freeze_state == True):
+        if(self.state == "FROZEN"):
             return
 
         if(self.canTurn(tile_map) == True and self.lock_turn_time == 0):
             self.direction = self.getDirection(tile_map, pacman, ghost_list)
-            self.lock_turn_time = 5
+            self.lock_turn_time = 3
 
         if (self.checkObstructionDirection(tile_map, self.direction)):
             self.snapDisplayToGrid()
@@ -211,11 +208,13 @@ class Ghost:
                     self.x += update_direction[self.direction][2]
                     self.y += update_direction[self.direction][3]
                     if self.lock_turn_time > 0: self.lock_turn_time -= 1
+                    if self.scatter_time > 0: self.scatter_time -= 1
             if(self.direction == "LEFT" or self.direction == "RIGHT"):
                 if(self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
                     self.x += update_direction[self.direction][2]
                     self.y += update_direction[self.direction][3]
                     if self.lock_turn_time > 0: self.lock_turn_time -= 1
+                    if self.scatter_time > 0: self.scatter_time -= 1
 
         if (self.display_x < SCREEN_OFFSET + self.radius and self.direction == "LEFT"): 
             self.display_x = SCREEN_WIDTH
@@ -224,7 +223,10 @@ class Ghost:
             self.display_x = SCREEN_OFFSET
             self.x = 0
 
-        if(self.feared_state == True):
+        if(self.scatter_time == 0 and self.state == "SCATTER"):
+            self.state = "CHASE"
+
+        if(self.state == "FEARED"):
             self.feared_time -= 1
             self.speed = 1
             if(self.feared_time == 0):
@@ -240,57 +242,63 @@ class Ghost:
             "RIGHT": 3
         }
 
-        if(self.feared_state == True):
+        if(self.state == "FEARED"):
             screen.blit(self.frames[4], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
-        elif(self.dead == True):
+        elif(self.state == "DEAD"):
             screen.blit(self.frames[5], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
         else:
             screen.blit(self.frames[direction_mapping[self.direction]], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
         
 class Blinky(Ghost): # blinky (red) use A_star search
-    def __init__(self, starting_position, direction):
-        super().__init__(starting_position, direction, "blinky")
+    def __init__(self, starting_position, direction, starting_scatter_time):
+        super().__init__(starting_position, direction, "blinky", starting_scatter_time)
 
     def getDirection(self, tile_map, pacman, ghost_list):  
-        expanded = set()
-        path = Pfinder.a_star(tile_map,(self.y,self.x), (pacman.y,pacman.x),  expanded, ghost_list) 
-        if path is None : 
-            direction = (0,0)
-            print("No path found")
-            return "STAY"
-        direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
-        return Pfinder.switch_case(direction) #1/ why switched_case undifined ? - Neidy 
-
+        if(self.state == "SCATTER" or self.state == "FEARED"):
+            return super().getRandomDirection(tile_map, pacman, ghost_list)
+        else:
+            expanded = set()
+            path = Pfinder.a_star(tile_map,(self.y,self.x), (pacman.y,pacman.x),  expanded, ghost_list) 
+            if path is None : 
+                direction = (0,0)
+                #debug print("No path found")
+                return "STAY"
+            direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
+            return Pfinder.switch_case(direction) #1/ why switched_case undifined ? - Neidy 
 
 class Inky(Ghost):
-    def __init__(self, starting_position, direction):
-        super().__init__(starting_position, direction, "inky")
+    def __init__(self, starting_position, direction, starting_scatter_time):
+        super().__init__(starting_position, direction, "inky", starting_scatter_time)
     
     #override with specific behavior
-    def getDirection(self, tile_map, pacman, other_ghosts):
-        return super().getDirection(tile_map, pacman, other_ghosts)
+    def getDirection(self, tile_map, pacman, ghosts_list):
+        return super().getRandomDirection(tile_map, pacman, ghosts_list)
 
 class Clyde(Ghost):
-    def __init__(self, starting_position, direction):
-        super().__init__(starting_position, direction, "clyde")
+    def __init__(self, starting_position, direction, starting_scatter_time):
+        super().__init__(starting_position, direction, "clyde", starting_scatter_time)
     
     #override with specific behavior
-    def getDirection(self, tile_map, pacman, other_ghosts):
-        return super().getDirection(tile_map, pacman, other_ghosts)
+    def getDirection(self, tile_map, pacman, ghosts_list):
+        return super().getRandomDirection(tile_map, pacman, ghosts_list)
     
 class Pinky(Ghost):
-    def __init__(self, starting_position, direction):
-        super().__init__(starting_position, direction, "pinky")
+    def __init__(self, starting_position, direction, starting_scatter_time):
+        super().__init__(starting_position, direction, "pinky", starting_scatter_time)
     
     #override with specific behavior
     def getDirection(self, tile_map, pacman, ghost_list):  
-        visited = set()
-        expanded_list = [(self.y,self.x)] #expanded is a list,  i didnt quite understand the meaning of this list yet - Neidy 
-        path = Pfinder.dfs_recursive_ordered(tile_map,(self.y,self.x),visited, (pacman.y,pacman.x),  expanded_list, ghost_list)   
-        if path is None :
-            direction = (0,0)
-            print("No path found")
-            return "STAY"
-        print("PATH FOUND!")
-        direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
-        return Pfinder.switch_case(direction) #1/ why switched_case undifined ? - Neidy 
+        if(self.state == "SCATTER" or self.state == "FEARED"):
+            return super().getRandomDirection(tile_map, pacman, ghost_list)
+        else:
+            visited = set()
+            expanded_list = [(self.y,self.x)] #expanded is a list,  i didnt quite understand the meaning of this list yet - Neidy 
+            path = Pfinder.dfs_recursive_ordered(tile_map,(self.y,self.x),visited, (pacman.y,pacman.x),  expanded_list, ghost_list)   
+            if path is None :
+                direction = (0,0)
+                #debug print("No path found")
+                return "STAY"
+            # debug print("PATH FOUND!")
+            direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
+            return Pfinder.switch_case(direction) #1/ why switched_case undifined ? - Neidy 
+        

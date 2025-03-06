@@ -46,12 +46,13 @@ inky_starting_position = (13, 19)
 pinky_starting_position = (17, 19)
 
 starting_positions = [pacman_starting_position, blinky_starting_position, clyde_starting_position, inky_starting_position, pinky_starting_position]
+starting_state = (50, "SCATTER") #time of scatter mode, scatter mode
 
 pacman = pacman_m.Pacman(pacman_starting_position, "NONE")
-blinky = ghosts.Blinky(blinky_starting_position, "UP")
-clyde = ghosts.Clyde(clyde_starting_position, "UP")
-inky = ghosts.Inky(inky_starting_position, "UP")
-pinky = ghosts.Pinky(pinky_starting_position, "UP")
+blinky = ghosts.Blinky(blinky_starting_position, "UP", starting_state)
+clyde = ghosts.Clyde(clyde_starting_position, "UP", starting_state)
+inky = ghosts.Inky(inky_starting_position, "UP", starting_state)
+pinky = ghosts.Pinky(pinky_starting_position, "UP", starting_state)
 
 ghosts_list = [blinky, clyde, inky, pinky]
 
@@ -67,7 +68,7 @@ start = True
 enable_intro = True
 
 # pause time
-pause_time = 4500 #milliseconds #original 4500
+pause_time = 1 #milliseconds #original 4500
 pausing = pygame.time.get_ticks() + pause_time
 
 # weird img files bug
@@ -75,7 +76,7 @@ print("something something all those pngs file are corrupted or sth idk man i ju
 print("type \"debugmode\" to enable debug mode")
 
 #debug mode
-enable_debug = False
+enable_debug = True
 key_order = [pygame.K_d, pygame.K_e, pygame.K_b, pygame.K_u, pygame.K_g, pygame.K_m, pygame.K_o, pygame.K_d, pygame.K_e] #[debugmode]
 debug_input_queue = []
 
@@ -128,7 +129,7 @@ while running:
     # starting sequence
     if start and enable_intro:
         start = False
-        intro_sfx.play()
+        #intro_sfx.play()
         last_toggle_time = 0
         show_text = True
         while pygame.time.get_ticks() < pausing:

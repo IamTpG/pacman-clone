@@ -87,7 +87,7 @@ def switch_case(direction):
         (-1, 0): "UP",
         (1, 0) : "DOWN"
     }
-    return switcher.get(direction, "Invalid")  # Default case
+    return switcher.get(direction, "Invalid")  # Default case 
 
 if __name__ == '__main__':
     print("This is a module. Not meant to be run standalone.")

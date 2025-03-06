@@ -1,7 +1,8 @@
 import pygame
 
 # local
-import tile_map as TMap
+import pathfinders
+import tile_map as TMap 
 import ghosts
 
 if __name__ == "__main__":

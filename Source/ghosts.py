@@ -4,7 +4,8 @@ import queue
 
 # local
 import tile_map as TMap
-import pathfinders
+import pathfinders as Pfinder  
+
 
 if __name__ == '__main__':
     print("This is a module, it should not be run standalone!")
@@ -121,8 +122,27 @@ class Ghost:
         self.direction = direction
         self.speed = GHOST_SPEED
         self.snapDisplayToGrid()
+    def switch_case(direction):
+        
+        switcher = {
+            (0, -1): "LEFT",
+            (0, 1): "RIGHT",
+            (-1, 0): "UP",
+            (1, 0) : "DOWN"
+        }
+        return switcher.get(direction, "Invalid")  # Default case 
+    
+    def getDirection(tile_map,pacman,other_ghost): 
+        expanded = set()
+        path = Pfinder.a_star(tile_map,self, pacman,  expanded)  
+        direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
+       
+        return switch_case(direction) #1/ tai sao switch case o tren ma bao undefined ?
+    
+    
 
-    def getDirection(self, tile_map, pacman, ghost_list):
+    def getDirection2(self, tile_map, pacman, ghost_list):  
+        
         possible_turns = {
             "UP": ["LEFT", "RIGHT", "UP"],
             "DOWN": ["LEFT", "RIGHT", "DOWN"],
@@ -235,9 +255,9 @@ class Ghost:
 class Blinky(Ghost):
     def __init__(self, starting_position, direction):
         super().__init__(starting_position, direction, "blinky")
-    
+     
     #override with specific behavior
-    def getDirection(self, tile_map, pacman, other_ghosts):
+    def getDirection(self, tile_map, pacman, other_ghosts):  
         return super().getDirection(tile_map, pacman, other_ghosts) #using parent class behavior, remove this when adding specific behavior
 
 class Inky(Ghost):

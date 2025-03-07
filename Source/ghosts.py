@@ -251,7 +251,6 @@ class Ghost:
         if (self.scatter_time == 0 and self.state == "SCATTER"):
             self.state = "CHASE"
             self.chase_time = self.MAX_CHASE_TIME
-            self.snapDisplayToGrid()
 
         if (self.scared_time == 0 and self.state == "SCARED"):
             self.state = "SCATTER"
@@ -263,12 +262,10 @@ class Ghost:
         if (self.chase_time == 0 and self.state == "CHASE"):
             self.state = "SCATTER"
             self.scatter_time = self.MAX_SCATTER_TIME - 250
-            self.snapDisplayToGrid()
 
         if (self.state == "DEAD" and self.x == 15 and self.y == 19):
             self.state = "SCATTER"
             self.scatter_time = self.MAX_SCATTER_TIME
-            self.snapDisplayToGrid()
 
     def render(self, screen):
         direction_mapping = {

@@ -26,10 +26,10 @@ GAME_FONT = TMap.GAME_FONT
 
 # input mapping
 input_mapping = {
-    pygame.constants.K_UP: "UP",
-    pygame.constants.K_DOWN: "DOWN",
-    pygame.constants.K_LEFT: "LEFT",
-    pygame.constants.K_RIGHT: "RIGHT"
+    pygame.constants.K_UP:      "UP",
+    pygame.constants.K_DOWN:    "DOWN",
+    pygame.constants.K_LEFT:    "LEFT",
+    pygame.constants.K_RIGHT:   "RIGHT"
 }
 
 # game loop 
@@ -41,18 +41,18 @@ start = False
 # initialize objects
 pacman_starting_position = (15, 28)
 blinky_starting_position = (15, 16)
-clyde_starting_position = (15, 19)
-inky_starting_position = (13, 19)
-pinky_starting_position = (17, 19)
+clyde_starting_position  = (15, 19)
+inky_starting_position   = (13, 19)
+pinky_starting_position  = (17, 19)
 
 starting_positions = [pacman_starting_position, blinky_starting_position, clyde_starting_position, inky_starting_position, pinky_starting_position]
-starting_state = (50, "SCATTER") #time of scatter mode, scatter mode
+starting_state = (50, "SCATTER") # time of scatter mode, scatter mode
 
-pacman = pacman_m.Pacman(pacman_starting_position, "NONE")
-blinky = ghosts.Blinky(blinky_starting_position, "UP", starting_state)
-clyde = ghosts.Clyde(clyde_starting_position, "UP", starting_state)
-inky = ghosts.Inky(inky_starting_position, "UP", starting_state)
-pinky = ghosts.Pinky(pinky_starting_position, "UP", starting_state)
+pacman  = pacman_m.Pacman(pacman_starting_position, "NONE")
+blinky  = ghosts.Blinky(blinky_starting_position, "UP", starting_state)
+clyde   = ghosts.Clyde(clyde_starting_position, "UP", starting_state)
+inky    = ghosts.Inky(inky_starting_position, "UP", starting_state)
+pinky   = ghosts.Pinky(pinky_starting_position, "UP", starting_state)
 
 ghosts_list = [blinky, clyde, inky, pinky]
 
@@ -80,9 +80,9 @@ enable_debug = True
 key_order = [pygame.K_d, pygame.K_e, pygame.K_b, pygame.K_u, pygame.K_g, pygame.K_m, pygame.K_o, pygame.K_d, pygame.K_e] #[debugmode]
 debug_input_queue = []
 
-while running:
+while (running):
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
+        if (event.type == pygame.QUIT):
             running = False
 
         if (event.type == pygame.KEYDOWN):
@@ -111,7 +111,7 @@ while running:
     pinky.update(tilemap.tilemap, pacman, ghosts_list)
 
     # check collision
-    if(pacman.checkCollision(ghosts_list, starting_positions)):
+    if (pacman.checkCollision(ghosts_list, starting_positions)):
         running = False
 
     # render objects
@@ -126,40 +126,40 @@ while running:
     pygame.display.flip()
 
     # fill the screen with a color to wipe away anything from last frame
-    if(not start or not enable_intro):
+    if (not start or not enable_intro):
         screen.fill("black")
 
     # display game info
     TMap.displayGameInfo(screen, pacman)
-    if(enable_debug):
+    if (enable_debug):
         TMap.displayDebugInfo(screen, pacman, ghosts_list)
 
     # starting sequence
-    if start and enable_intro:
+    if (start and enable_intro):
         start = False
         #intro_sfx.play()
         last_toggle_time = 0
         show_text = True
-        while pygame.time.get_ticks() < pausing:
+        while (pygame.time.get_ticks() < pausing):
             last_toggle_time, show_text = TMap.flashText(screen, last_toggle_time, show_text, READY_TEXT, BLACK_READY_TEXT)
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+                if (event.type == pygame.QUIT):
                     running = False
                     break
 
-                if event.type == pygame.KEYDOWN and not enable_debug:
+                if (event.type == pygame.KEYDOWN and not enable_debug):
                     debug_input_queue.append(event.key)
 
-                if len(debug_input_queue) > len(key_order):
+                if (len(debug_input_queue) > len(key_order)):
                     debug_input_queue.pop(0)        
 
-                if debug_input_queue == key_order and not enable_debug:
+                if (debug_input_queue == key_order and not enable_debug):
                     print("DEBUG MODE ENABLED")
                     enable_debug = True    
-            if not running:
+            if (not running):
                 break
 
-        if(enable_debug):
+        if (enable_debug):
             TMap.enableDebugMode(SCREEN_WIDTH)
 
     FPS = 60

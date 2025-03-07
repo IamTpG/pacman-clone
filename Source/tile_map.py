@@ -1,7 +1,7 @@
-import pygame
-
 if __name__ == '__main__':
     print("This is a module, it should not be run standalone!")
+
+import pygame
 
 TILE_RESU = 8   # Tile size in .png
 TILE_SIZE = 16  # Tile size to render
@@ -23,9 +23,9 @@ GHOST_SPEED = 2
 # ghost colors 
 ghost_colors = {
     "blinky": (255, 0, 0),
-    "clyde": (255, 165, 0),
-    "inky": (0, 255, 255),
-    "pinky": (255, 105, 180)
+    "clyde":  (255, 165, 0),
+    "inky":   (0, 255, 255),
+    "pinky":  (255, 105, 180)
 }
 
 # display game info

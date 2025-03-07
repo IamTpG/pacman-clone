@@ -98,7 +98,9 @@ while (running):
                     ghost.scared_time = ghost.MAX_SCARED_TIME
 
     # update pacman
-    pacman.update(tilemap.tilemap)
+    pacman.update(tilemap.tilemap) 
+    score = pacman.eat(tilemap.tilemap)
+    TMap.SCORE += score
 
     # update ghosts
     blinky.update(tilemap.tilemap, pacman, ghosts_list)

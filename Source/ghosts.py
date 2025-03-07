@@ -166,7 +166,7 @@ class Ghost:
         }
 
         dx, dy = direction_mapping[direction]
-        if (tile_map[self.y + dy][self.x + dx] != -1):
+        if (tile_map[self.y + dy][self.x + dx] > -1):
             return True
         return False
 

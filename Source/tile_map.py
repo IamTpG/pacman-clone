@@ -21,6 +21,8 @@ PACMAN_SPEED = 2
 GHOST_RADIUS = TILE_SIZE - 5
 GHOST_SPEED = 2
 
+global SCORE
+SCORE = 1000
 # ghost colors 
 ghost_colors = {
     "blinky": (255, 0, 0),
@@ -130,7 +132,7 @@ def displayGameInfo(screen, pacman):
         screen.blit(lives_image, (SCREEN_OFFSET * 7 + i * 20, SCREEN_HEIGHT - 20))
 
     #display score
-    SCORE_TEXT = GAME_FONT.render("SCORE: " + str(69420), True, (255, 255, 255)) #placeholder value, replace with score variable
+    SCORE_TEXT = GAME_FONT.render("SCORE: " + str(SCORE), True, (255, 255, 255)) #placeholder value, replace with score variable
     screen.blit(SCORE_TEXT, (SCREEN_OFFSET * 35, SCREEN_HEIGHT - 20))
 
 def flashText(screen, last_toggle_time, show_text, text, text2):

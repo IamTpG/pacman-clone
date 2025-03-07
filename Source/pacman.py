@@ -21,7 +21,6 @@ PACMAN_RADIUS = TMap.PACMAN_RADIUS
 
 PACMAN_SPEED = TMap.PACMAN_SPEED
 GHOST_SPEED = TMap.GHOST_SPEED
-
 SCALING_FACTOR = 2.3
 
 def loadPacmanDeathFrames():
@@ -150,7 +149,7 @@ class Pacman:
         }
 
         dx, dy = direction_mapping[direction]
-        if (tile_map[self.y + dy][self.x + dx] != -1):
+        if (tile_map[self.y + dy][self.x + dx] > -1):
             return True
         return False
 
@@ -317,3 +316,23 @@ class Pacman:
                 self.dead = False
                 self.death_frames_counter = 0
                 self.frame_counter = 0
+    
+    def eat(self, tile_map):
+        score_value = {
+        18: 50,    # Ghost House
+        -2: 10,    # Pellet/power pellet
+        -3: 100,   # Cherry
+        -4: 200,   # Orange
+        -5: 300,   # Apple
+        -6: 400    # Strawberry
+        }
+        tile_x = int(self.x)
+        tile_y = int(self.y)
+        value = tile_map[tile_y][tile_x]
+        if(value in score_value):
+            TMap.SCORE += score_value[value]
+            tile_map[tile_y][tile_x] = -1
+            return value
+        
+        return -1 
+

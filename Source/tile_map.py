@@ -21,8 +21,6 @@ PACMAN_SPEED = 2
 GHOST_RADIUS = TILE_SIZE - 5
 GHOST_SPEED = 2
 
-global SCORE
-SCORE = 1000
 # ghost colors 
 ghost_colors = {
     "blinky": (255, 0, 0),
@@ -124,7 +122,7 @@ def displayDebugInfo(screen, pacman, ghosts_list):
             GHOST_TIMER_TEXT = GAME_FONT_SMALL.render(str(ghosts_list[i].scared_time), True, (255, 255, 255))
             screen.blit(GHOST_TIMER_TEXT, (SCREEN_OFFSET * 72, SCREEN_OFFSET * (12.8 + i * 2)))
 
-def displayGameInfo(screen, pacman):
+def displayGameInfo(screen, pacman, tile_map):
     #display pacman lives
     LIVES_TEXT = GAME_FONT.render("LIVES: ", True, (255, 255, 255))
     screen.blit(LIVES_TEXT, (SCREEN_OFFSET, SCREEN_HEIGHT - 20))
@@ -132,7 +130,7 @@ def displayGameInfo(screen, pacman):
         screen.blit(lives_image, (SCREEN_OFFSET * 7 + i * 20, SCREEN_HEIGHT - 20))
 
     #display score
-    SCORE_TEXT = GAME_FONT.render("SCORE: " + str(SCORE), True, (255, 255, 255)) #placeholder value, replace with score variable
+    SCORE_TEXT = GAME_FONT.render("SCORE: " + str(int(tile_map.score)), True, (255, 255, 255)) #placeholder value, replace with score variable
     screen.blit(SCORE_TEXT, (SCREEN_OFFSET * 35, SCREEN_HEIGHT - 20))
 
 def flashText(screen, last_toggle_time, show_text, text, text2):
@@ -168,13 +166,44 @@ class Tilemap:
         self.tilemap = ReadMap()
         self.tileset = pygame.image.load(filename)
         self.tileset = pygame.transform.scale_by(self.tileset, (TILE_SIZE / TILE_RESU, TILE_SIZE / TILE_RESU))
+
+        pellet = pygame.image.load("Resource\\food\\pellet.png")
+        power_pellet = pygame.image.load("Resource\\food\\power_pellet.png")
+        cherry = pygame.image.load("Resource\\food\\cherry.png")
+        orange = pygame.image.load("Resource\\food\\orange.png")
+        apple = pygame.image.load("Resource\\food\\apple.png")
+        strawberry = pygame.image.load("Resource\\food\\strawberry.png")
+
+        self.food_list = [pellet, power_pellet, cherry, orange, apple, strawberry]
+
+        for i in range(len(self.food_list)):
+            self.food_list[i] = pygame.transform.scale(self.food_list[i], (TILE_SIZE, TILE_SIZE))
+
+        self.pellet_count = 578 + 4 # 4 power pellets
+        self.score = 1000 # starting value
     
     def render(self, screen):
+        self.score -= 0.1
+
         for i in range(1, MAP_HEIGHT + 1):
             for j in range(1, MAP_WIDTH + 1):
                 # Empty cell
                 if (self.tilemap[i][j] < 0):
-                    continue
+                    match (self.tilemap[i][j]):
+                        case -2:
+                            screen.blit(self.food_list[0], (SCREEN_OFFSET + (j - 1) * TILE_SIZE, SCREEN_OFFSET + (i - 1) * TILE_SIZE)) #pellet
+                        case -3:
+                            screen.blit(self.food_list[1], (SCREEN_OFFSET + (j - 1) * TILE_SIZE, SCREEN_OFFSET + (i - 1) * TILE_SIZE)) #power pellet
+                        case -4:
+                            screen.blit(self.food_list[2], (SCREEN_OFFSET + (j - 1) * TILE_SIZE, SCREEN_OFFSET + (i - 1) * TILE_SIZE)) #cherry
+                        case -5:
+                            screen.blit(self.food_list[3], (SCREEN_OFFSET + (j - 1) * TILE_SIZE, SCREEN_OFFSET + (i - 1) * TILE_SIZE)) #orange
+                        case -6:
+                            screen.blit(self.food_list[4], (SCREEN_OFFSET + (j - 1) * TILE_SIZE, SCREEN_OFFSET + (i - 1) * TILE_SIZE)) #apple
+                        case -7:
+                            screen.blit(self.food_list[5], (SCREEN_OFFSET + (j - 1) * TILE_SIZE, SCREEN_OFFSET + (i - 1) * TILE_SIZE))
+                        case _:
+                            continue
 
                 y, x = (self.tilemap[i][j] % 10), (self.tilemap[i][j] // 10)
                 src = pygame.Rect(y * TILE_SIZE, x * TILE_SIZE, TILE_SIZE, TILE_SIZE)

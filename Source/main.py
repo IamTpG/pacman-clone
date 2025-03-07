@@ -99,8 +99,7 @@ while (running):
 
     # update pacman
     pacman.update(tilemap.tilemap) 
-    score = pacman.eat(tilemap.tilemap)
-    TMap.SCORE += score
+    pacman.eatFood(tilemap, ghosts_list)
 
     # update ghosts
     blinky.update(tilemap.tilemap, pacman, ghosts_list)
@@ -109,8 +108,12 @@ while (running):
     pinky.update(tilemap.tilemap, pacman, ghosts_list)
 
     # check collision
-    if (pacman.checkCollision(ghosts_list, starting_positions)):
+    if (pacman.checkCollision(tilemap, ghosts_list, starting_positions)):
         running = False
+
+    if (tilemap.pellet_count == 0):
+        print("YOU WIN!")
+        #running = False
 
     # render objects
     tilemap.render(screen)
@@ -128,7 +131,7 @@ while (running):
         screen.fill((0, 0, 0), update_region)
 
     # display game info
-    TMap.displayGameInfo(screen, pacman)
+    TMap.displayGameInfo(screen, pacman, tilemap)
     if (enable_debug):
         TMap.displayDebugInfo(screen, pacman, ghosts_list)
 

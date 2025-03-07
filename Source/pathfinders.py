@@ -3,7 +3,6 @@ if __name__ == '__main__':
     exit()
 
 import heapq
-import random
 from collections import deque
 
 def bfs(grid, start, goal, expanded, ghost_list):

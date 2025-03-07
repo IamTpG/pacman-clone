@@ -149,11 +149,11 @@ class Pacman:
         }
 
         dx, dy = direction_mapping[direction]
-        if (tile_map[self.y + dy][self.x + dx] > -1):
+        if (tile_map[self.y + dy][self.x + dx] > -1): 
             return True
         return False
 
-    def checkCollision(self, ghosts : list, starting_positions : list):
+    def checkCollision(self, tile_map, ghosts : list, starting_positions : list):
         COLLISION_RADIUS = 5
 
         for ghost in ghosts:
@@ -168,24 +168,10 @@ class Pacman:
                         return True
                     return False
                 else:
+                    tile_map.score += 200
                     ghost.state = "DEAD"
                     ghost.speed = TMap.GHOST_SPEED
                     ghost.snapDisplayToGrid()
-        '''
-        if any(abs(self.display_x - ghosts.display_x) < COLLISION_RADIUS and 
-               abs(self.display_y - ghosts.display_y) < COLLISION_RADIUS for ghosts in ghosts) and self.dead == False:
-            if ghosts[0].state != "SCARED":
-                self.lives -= 1
-                self.sound[1].stop()
-                self.sound[0].play()
-                self.dead = True
-                if(self.lives == 0):
-                    return True
-                return False
-            else:
-                for ghost in ghosts:
-        '''
-
         
         if self.dead == True and self.death_frames_counter == 1:
             self.speed = 0
@@ -211,6 +197,32 @@ class Pacman:
             return False
 
         return not self.checkObstructionDirection(tile_map, wanted_direction)
+
+    def eatFood(self, tile_map, ghost_list):
+        score_value = {
+        -2: 10,    # Pellet
+        -3: 20,    # Power pellet
+        -4: 100,   # Cherry
+        -5: 200,   # Orange
+        -6: 300,   # Apple
+        -7: 400,   # Strawberry
+        }
+        
+        value = tile_map.tilemap[self.y][self.x]
+        if(value < -1 and value > -9):
+            tile_map.score += score_value[value]
+            tile_map.tilemap[self.y][self.x] = -1
+            if(value == -2):
+                tile_map.pellet_count -= 1
+            elif (value == -3):
+                tile_map.pellet_count -= 1
+                for ghost in ghost_list:
+                    if ghost.state == "SCATTER" or ghost.state == "CHASE":
+                        ghost.state = "SCARED"
+                        ghost.speed = TMap.GHOST_SPEED / 2
+                        ghost.snapDisplayToGrid()
+                        ghost.scared_time = ghost.MAX_SCARED_TIME
+            
 
     def update(self, tile_map):
         # reset queue turn if time runs out
@@ -316,23 +328,3 @@ class Pacman:
                 self.dead = False
                 self.death_frames_counter = 0
                 self.frame_counter = 0
-    
-    def eat(self, tile_map):
-        score_value = {
-        18: 50,    # Ghost House
-        -2: 10,    # Pellet/power pellet
-        -3: 100,   # Cherry
-        -4: 200,   # Orange
-        -5: 300,   # Apple
-        -6: 400    # Strawberry
-        }
-        tile_x = int(self.x)
-        tile_y = int(self.y)
-        value = tile_map[tile_y][tile_x]
-        if(value in score_value):
-            TMap.SCORE += score_value[value]
-            tile_map[tile_y][tile_x] = -1
-            return value
-        
-        return -1 
-

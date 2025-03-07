@@ -126,21 +126,21 @@ def dfs_recursive_ordered(grid, start, visited, goal,expanded_list, ghost_list):
     rows, cols = len(grid), len(grid[0])
     
     # Check boundaries and if already visited
-    if not (0 <= start[0] < rows and 0 <= start[1] < cols ) or (start[0], start[1]) in visited:
+    if not (1 <= start[0] <= rows and 1 <= start[1] <= cols ) or (start[0], start[1]) in visited:
         return None
     visited.add((start[0], start[1]))
     # if current = finish
     if start == goal:
-        visited.pop()
+        
         return [(start[0],start[1])]
     
-    # Directions: left, up, right, down
-    directions = [(0, -1), (-1, 0), (0, 1), (1, 0)]
+   
+    directions = [(1, 0),(0, 1), (-1, 0), (0, -1) ]
     # for neighbors of current
     for di, dj in directions:
         ni = di + start[0]
         nj = dj + start[1]
-        if 0 <= nj < cols and 0 <= ni < rows and grid[ni][nj] == -1:
+        if 1 <= nj <= cols and 1 <= ni <= rows and grid[ni][nj] == -1:
            
             if ((ni,nj)) not in visited:
                 expanded_list.append((ni,nj))

@@ -33,6 +33,7 @@ input_mapping = {
 }
 
 # game loop 
+update_region = pygame.Rect(0, SCREEN_OFFSET * 7, SCREEN_WIDTH + SCREEN_OFFSET, SCREEN_HEIGHT + SCREEN_OFFSET)
 screen = pygame.display.set_mode((SCREEN_WIDTH + SCREEN_OFFSET * 2, SCREEN_HEIGHT + SCREEN_OFFSET * 2))
 clock = pygame.time.Clock()
 running = True
@@ -46,13 +47,12 @@ inky_starting_position   = (13, 19)
 pinky_starting_position  = (17, 19)
 
 starting_positions = [pacman_starting_position, blinky_starting_position, clyde_starting_position, inky_starting_position, pinky_starting_position]
-starting_state = (50, "SCATTER") # time of scatter mode, scatter mode
 
 pacman  = pacman_m.Pacman(pacman_starting_position, "NONE")
-blinky  = ghosts.Blinky(blinky_starting_position, "UP", starting_state)
-clyde   = ghosts.Clyde(clyde_starting_position, "UP", starting_state)
-inky    = ghosts.Inky(inky_starting_position, "UP", starting_state)
-pinky   = ghosts.Pinky(pinky_starting_position, "UP", starting_state)
+blinky  = ghosts.Blinky(blinky_starting_position, "UP")
+clyde   = ghosts.Clyde(clyde_starting_position, "UP")
+inky    = ghosts.Inky(inky_starting_position, "UP")
+pinky   = ghosts.Pinky(pinky_starting_position, "UP")
 
 ghosts_list = [blinky, clyde, inky, pinky]
 
@@ -70,10 +70,6 @@ enable_intro = True
 # pause time
 pause_time = 1 #milliseconds #original 4500
 pausing = pygame.time.get_ticks() + pause_time
-
-# weird img files bug
-print("something something all those pngs file are corrupted or sth idk man i just work here")
-print("type \"debugmode\" to enable debug mode")
 
 #debug mode
 enable_debug = True
@@ -123,11 +119,11 @@ while (running):
     pacman.render(screen, tilemap)
 
     # flip() the display to put your work on screen
-    pygame.display.flip()
+    pygame.display.update()
 
     # fill the screen with a color to wipe away anything from last frame
     if (not start or not enable_intro):
-        screen.fill("black")
+        screen.fill((0, 0, 0), update_region)
 
     # display game info
     TMap.displayGameInfo(screen, pacman)
@@ -160,8 +156,11 @@ while (running):
                 break
 
         if (enable_debug):
-            TMap.enableDebugMode(SCREEN_WIDTH)
+            screen, new_screen_width = TMap.enableDebugMode(SCREEN_WIDTH)
+            update_region = pygame.Rect(0, SCREEN_OFFSET * 7, new_screen_width + SCREEN_OFFSET, SCREEN_HEIGHT + SCREEN_OFFSET)
 
+        TMap.displayTitleCard(screen, enable_debug)
+    
     FPS = 60
     clock.tick(FPS) 
 

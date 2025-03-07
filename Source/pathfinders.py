@@ -1,5 +1,6 @@
 if __name__ == '__main__':
     print("This is a module. Not meant to be run standalone.")
+    exit()
 
 import heapq
 import random
@@ -121,7 +122,6 @@ def ucs(grid, start, goal, expanded, ghost_list):
 
     path.reverse()
     return path
-
 
 def dfs_recursive_ordered(grid, start, visited, goal,expanded_list, ghost_list):
     rows, cols = len(grid), len(grid[0])

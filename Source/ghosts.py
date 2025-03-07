@@ -1,5 +1,6 @@
 if __name__ == '__main__':
     print("This is a module, it should not be run standalone!")
+    exit()
 
 import pygame
 import random
@@ -24,6 +25,13 @@ GHOST_RADIUS = TMap.GHOST_RADIUS
 GHOST_SPEED = TMap.GHOST_SPEED
 
 SCALING_FACTOR = 1.1
+
+opposite_direction = {
+    "UP": "DOWN",
+    "DOWN": "UP",
+    "LEFT": "RIGHT",
+    "RIGHT": "LEFT"
+}
 
 def loadGhostFrames(name):
     blinky_DOWN     = pygame.image.load("Resource\\ghosts\\" + name + "\\down.png")
@@ -75,7 +83,7 @@ def loadGhostFrames(name):
 
 
 class Ghost:
-    def __init__(self, starting_position, direction, name, starting_state):
+    def __init__(self, starting_position, direction, name):
         # private parent class
         if (type(self) == Ghost):
             raise Exception("Ghost is an abstract class and cannot be instantiated directly!")
@@ -86,13 +94,15 @@ class Ghost:
 
         # ghost states
         self.all_possible_states = ["NONE", "SCARED", "DEAD", "SCATTER", "CHASE"]
-        self.state = starting_state[1]
+        self.state = "SCATTER" # default starting state
         
-        self.MAX_SCARED_TIME  = 50
-        self.MAX_SCATTER_TIME = starting_state[0]
+        self.MAX_SCARED_TIME  = 500
+        self.MAX_SCATTER_TIME = 750
+        self.MAX_CHASE_TIME   = 750
 
-        self.scatter_time = starting_state[0]
+        self.scatter_time = self.MAX_SCATTER_TIME
         self.scared_time  = 0
+        self.chase_time   = 0
 
         # lock turning
         self.lock_turn_time = 0
@@ -102,7 +112,6 @@ class Ghost:
         self.speed = GHOST_SPEED
         self.x = starting_position[0]
         self.y = starting_position[1]
-        #self.target = ["PACMAN", "GHOST_HOUSE", "CORNER"] # if dead, go to ghost house, if scattering, go to corner, else go to pacman
 
         # display
         self.radius = GHOST_RADIUS
@@ -180,7 +189,7 @@ class Ghost:
 
         if (self.canTurn(tile_map) == True and self.lock_turn_time == 0):
             self.direction = self.getDirection(tile_map, pacman, ghost_list)
-            self.lock_turn_time = 3
+            self.lock_turn_time = 2
 
         if (self.checkObstructionDirection(tile_map, self.direction)):
             self.snapDisplayToGrid()
@@ -217,36 +226,50 @@ class Ghost:
                     self.x += update_direction[self.direction][2]
                     self.y += update_direction[self.direction][3]
                     if self.lock_turn_time > 0: self.lock_turn_time -= 1
-                    if self.scatter_time > 0: self.scatter_time -= 1
-                    if self.scared_time > 0: self.scared_time -= 1
 
             if (self.direction == "LEFT" or self.direction == "RIGHT"):
                 if (self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
                     self.x += update_direction[self.direction][2]
                     self.y += update_direction[self.direction][3]
                     if self.lock_turn_time > 0: self.lock_turn_time -= 1
-                    if self.scatter_time > 0: self.scatter_time -= 1
-                    if self.scared_time > 0: self.scared_time -= 1
 
+        if self.scatter_time > 0: self.scatter_time -= 1
+        if self.scared_time > 0: self.scared_time -= 1
+        if self.chase_time > 0: self.chase_time -= 1
+
+        # screen wrapping
         if (self.display_x < SCREEN_OFFSET + self.radius and self.direction == "LEFT"): 
             self.display_x = SCREEN_WIDTH
             self.x = MAP_WIDTH
             self.snapDisplayToGrid()
-
         if (self.display_x > SCREEN_WIDTH and self.direction == "RIGHT"):  
             self.display_x = SCREEN_OFFSET
             self.x = 0
             self.snapDisplayToGrid()
 
+        # change ghost states
         if (self.scatter_time == 0 and self.state == "SCATTER"):
             self.state = "CHASE"
+            self.chase_time = self.MAX_CHASE_TIME
+            self.snapDisplayToGrid()
 
         if (self.scared_time == 0 and self.state == "SCARED"):
             self.state = "SCATTER"
             self.scatter_time = self.MAX_SCATTER_TIME
+            self.direction = opposite_direction[self.direction]
             self.snapDisplayToGrid()
             self.speed = GHOST_SPEED
-    
+
+        if (self.chase_time == 0 and self.state == "CHASE"):
+            self.state = "SCATTER"
+            self.scatter_time = self.MAX_SCATTER_TIME - 250
+            self.snapDisplayToGrid()
+
+        if (self.state == "DEAD" and self.x == 15 and self.y == 19):
+            self.state = "SCATTER"
+            self.scatter_time = self.MAX_SCATTER_TIME
+            self.snapDisplayToGrid()
+
     def render(self, screen):
         direction_mapping = {
             "UP": 1,
@@ -256,7 +279,7 @@ class Ghost:
         }
  
         if (self.state == "SCARED"): # when scared timer is less than 25% of the max time, blink
-            if (self.scared_time % 4 == 0 and self.scared_time < 0.25 * self.MAX_SCARED_TIME):
+            if (self.scared_time % 25 < 15 and self.scared_time < 0.25 * self.MAX_SCARED_TIME):
                 screen.blit(self.frames[5], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
             else:
                 screen.blit(self.frames[4], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
@@ -268,149 +291,144 @@ class Ghost:
             screen.blit(self.frames[direction_mapping[self.direction]], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
         
 class Blinky(Ghost): # blinky (red) use A_star search
-    def __init__(self, starting_position, direction, starting_scatter_time):
-        super().__init__(starting_position, direction, "blinky", starting_scatter_time)
+    def __init__(self, starting_position, direction):
+        super().__init__(starting_position, direction, "blinky")
 
-    def getDirection(self, tile_map, pacman, ghost_list):  
-        opposite_direction = {
-            "UP": "DOWN",
-            "DOWN": "UP",
-            "LEFT": "RIGHT",
-            "RIGHT": "LEFT"
-        }
-
+    def getDirection(self, tile_map, pacman, ghost_list): 
+        target = (0, 0)
         if (self.state == "SCATTER" or self.state == "SCARED"):
             return super().getRandomDirection(tile_map)
+        elif (self.state == "DEAD"):
+            target = (19, 15) #return to ghost house
         else:
-            expanded = set()
-            path = Pfinder.a_star(tile_map, (self.y, self.x), (pacman.y, pacman.x),  expanded, ghost_list) 
-            if (path is None or len(path) <= 1):
-                return self.direction # keep moving forward if no path is found
-            
-            direction = Pfinder.find_direction(path)
+            target = (pacman.y, pacman.x)
 
-            if (not self.state == "SCARED"):
-                return direction
-            else: 
-                return super().getRandomDirection(tile_map)
+        expanded = set()
+        path = Pfinder.a_star(tile_map, (self.y, self.x), target,  expanded, ghost_list) 
+        if (path is None or len(path) <= 1):
+            return self.direction # keep moving forward if no path is found
+        
+        direction = Pfinder.find_direction(path)
+
+        if (not self.state == "SCARED"):
+            return direction
+        else: 
+            return super().getRandomDirection(tile_map)
 
 class Inky(Ghost): # inky (blue) use BFS search
-    def __init__(self, starting_position, direction, starting_scatter_time):
-        super().__init__(starting_position, direction, "inky", starting_scatter_time)
+    def __init__(self, starting_position, direction):
+        super().__init__(starting_position, direction, "inky")
     
     def getDirection(self, tile_map, pacman, ghost_list):  
-        opposite_direction = {
-            "UP": "DOWN",
-            "DOWN": "UP",
-            "LEFT": "RIGHT",
-            "RIGHT": "LEFT"
-        }
+        target = (0, 0)
 
         if (self.state == "SCATTER"):
             return super().getRandomDirection(tile_map)
+        elif (self.state == "DEAD"):
+            target = (19, 15) #return to ghost house
         else:
-            expanded = set()
-            path = Pfinder.bfs(tile_map, (self.y, self.x), (pacman.y, pacman.x), expanded, ghost_list) 
-            if (path is None or len(path) <= 1):
-                direction = (0, 0)
-                return self.direction # keep moving forward if no path is found
-            
-            direction = Pfinder.find_direction(path)
+            target = (pacman.y, pacman.x)
 
-            if (not self.state == "SCARED"):
-                return direction
-            else:
-                return super().getRandomDirection(tile_map)
+        expanded = set()
+        path = Pfinder.bfs(tile_map, (self.y, self.x), target, expanded, ghost_list) 
+        if (path is None or len(path) <= 1):
+            direction = (0, 0)
+            return self.direction # keep moving forward if no path is found
+        
+        direction = Pfinder.find_direction(path)
+
+        if (not self.state == "SCARED"):
+            return direction
+        else:
+            return super().getRandomDirection(tile_map)
 
 class Clyde(Ghost): # clyde (orange) use UCS search
-    def __init__(self, starting_position, direction, starting_scatter_time):
-        super().__init__(starting_position, direction, "clyde", starting_scatter_time)
+    def __init__(self, starting_position, direction):
+        super().__init__(starting_position, direction, "clyde")
     
     def getDirection(self, tile_map, pacman, ghost_list):  
-        opposite_direction = {
-            "UP": "DOWN",
-            "DOWN": "UP",
-            "LEFT": "RIGHT",
-            "RIGHT": "LEFT"
-        }
+        target = (0, 0)
 
         if (self.state == "SCATTER"):
             return super().getRandomDirection(tile_map)
+        elif (self.state == "DEAD"):
+            target = (19, 15) #return to ghost house
         else:
-            expanded = set()
-            path = Pfinder.ucs(tile_map, (self.y, self.x), (pacman.y, pacman.x), expanded, ghost_list) 
-            if (path is None or len(path) <= 1):
-                return self.direction # keep moving forward if no path is found
-            
-            direction = Pfinder.find_direction(path)
+            target = (pacman.y, pacman.x)
 
-            if (not self.state == "SCARED"):
-                return direction
-            else: 
-                return super().getRandomDirection(tile_map)
+        expanded = set()
+        path = Pfinder.ucs(tile_map, (self.y, self.x), target, expanded, ghost_list) 
+        if (path is None or len(path) <= 1):
+            return self.direction # keep moving forward if no path is found
+        
+        direction = Pfinder.find_direction(path)
+
+        if (not self.state == "SCARED"):
+            return direction
+        else: 
+            return super().getRandomDirection(tile_map)
     
 class Pinky(Ghost): # pinky (pink) use DFS search
-    def __init__(self, starting_position, direction, starting_scatter_time):
-        super().__init__(starting_position, direction, "pinky", starting_scatter_time)
+    def __init__(self, starting_position, direction):
+        super().__init__(starting_position, direction, "pinky")
     
     #override with specific behavior
     def getDirection(self, tile_map, pacman, ghost_list):  
-        opposite_direction = {
-            "UP": "DOWN",
-            "DOWN": "UP",
-            "LEFT": "RIGHT",
-            "RIGHT": "LEFT"
-        }
+        target = (0, 0)
 
         if (self.state == "SCATTER"):
             return super().getRandomDirection(tile_map)
+        elif (self.state == "DEAD"):
+            target = (19, 15) #return to ghost house
         else:
-            visited = set()
-            expanded_list = [(self.y,self.x)] #expanded is a list,  i didnt quite understand the meaning of this list yet - Neidy 
-            path = Pfinder.dfs_recursive_ordered(tile_map,(self.y,self.x),visited, (pacman.y,pacman.x),  expanded_list, ghost_list)   
-            if path is None :
-                direction = (0,0)
-                return self.direction #keep moving in the same direction if no path is found
-            direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
-            #ghost not able to turn 180 degrees
-            if(Pfinder.switch_case(direction) == (opposite_direction[self.direction])):
-                if(Pfinder.switch_case(direction) == "UP" or Pfinder.switch_case(direction) == "DOWN"):
-                    #go left
-                    expanded_list = [(self.y,self.x-1)]
-                    path = Pfinder.dfs_recursive_ordered(tile_map,(self.y,self.x - 1),visited, (pacman.y,pacman.x),  expanded_list, ghost_list)
-                    if path is None:
-                        #go right
-                        expanded_list = [(self.y,self.x+1)]
-                        path = Pfinder.dfs_recursive_ordered(tile_map,(self.y,self.x + 1),visited, (pacman.y,pacman.x),  expanded_list, ghost_list)
-                        if path is None:
-                            return self.direction
-                        return "RIGHT"
-                    return "LEFT"
-                else:
-                    #go up
-                    expanded_list = [(self.y-1,self.x)]
-                    path = Pfinder.dfs_recursive_ordered(tile_map,(self.y - 1,self.x),visited, (pacman.y,pacman.x),  expanded_list, ghost_list)
-                    if path is None:
-                        #go down
-                        expanded_list = [(self.y+1,self.x)]
-                        path = Pfinder.dfs_recursive_ordered(tile_map,(self.y + 1,self.x),visited, (pacman.y,pacman.x),  expanded_list, ghost_list)
-                        if path is None:
-                            return self.direction
-                        return "DOWN"
-                    return "UP"
-            if(not self.state == "SCARED"):
-                print (Pfinder.switch_case(direction))  
-                return Pfinder.switch_case(direction) 
-            expanded_list = [(self.y, self.x)] # expanded is a list, i didnt quite understand the meaning of this list yet - Neidy 
-            path = Pfinder.dfs_recursive_ordered(tile_map, (self.y, self.x), visited, (pacman.y, pacman.x), expanded_list, ghost_list)   
-            
-            if (path is None or len(path) <= 1):
-                return self.direction # keep moving forward if no path is found
+            target = (pacman.y, pacman.x)
 
-            direction = Pfinder.find_direction(path)
-
-            if (not self.state == "SCARED"):
-                return direction
+        visited = set()
+        expanded_list = [(self.y,self.x)] #expanded is a list,  i didnt quite understand the meaning of this list yet - Neidy 
+        path = Pfinder.dfs_recursive_ordered(tile_map,(self.y,self.x),visited, target,  expanded_list, ghost_list)   
+        if path is None :
+            direction = (0,0)
+            return self.direction #keep moving in the same direction if no path is found
+        direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
+        #ghost not able to turn 180 degrees
+        if(Pfinder.switch_case(direction) == (opposite_direction[self.direction])):
+            if(Pfinder.switch_case(direction) == "UP" or Pfinder.switch_case(direction) == "DOWN"):
+                #go left
+                expanded_list = [(self.y,self.x-1)]
+                path = Pfinder.dfs_recursive_ordered(tile_map,(self.y,self.x - 1),visited, (pacman.y,pacman.x),  expanded_list, ghost_list)
+                if path is None:
+                    #go right
+                    expanded_list = [(self.y,self.x+1)]
+                    path = Pfinder.dfs_recursive_ordered(tile_map,(self.y,self.x + 1),visited, (pacman.y,pacman.x),  expanded_list, ghost_list)
+                    if path is None:
+                        return self.direction
+                    return "RIGHT"
+                return "LEFT"
             else:
-                return super().getRandomDirection(tile_map)
+                #go up
+                expanded_list = [(self.y-1,self.x)]
+                path = Pfinder.dfs_recursive_ordered(tile_map,(self.y - 1,self.x),visited, (pacman.y,pacman.x),  expanded_list, ghost_list)
+                if path is None:
+                    #go down
+                    expanded_list = [(self.y+1,self.x)]
+                    path = Pfinder.dfs_recursive_ordered(tile_map,(self.y + 1,self.x),visited, (pacman.y,pacman.x),  expanded_list, ghost_list)
+                    if path is None:
+                        return self.direction
+                    return "DOWN"
+                return "UP"
+        if(not self.state == "SCARED"):
+            print (Pfinder.switch_case(direction))  
+            return Pfinder.switch_case(direction) 
+        expanded_list = [(self.y, self.x)] # expanded is a list, i didnt quite understand the meaning of this list yet - Neidy 
+        path = Pfinder.dfs_recursive_ordered(tile_map, (self.y, self.x), visited, (pacman.y, pacman.x), expanded_list, ghost_list)   
+        
+        if (path is None or len(path) <= 1):
+            return self.direction # keep moving forward if no path is found
+
+        direction = Pfinder.find_direction(path)
+
+        if (not self.state == "SCARED"):
+            return direction
+        else:
+            return super().getRandomDirection(tile_map)
             

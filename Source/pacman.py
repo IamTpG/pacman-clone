@@ -1,12 +1,11 @@
+if __name__ == "__main__":
+    print("This is a module, it should not be run standalone!")
+    exit()
+
 import pygame
 
 # local
-import pathfinders
 import tile_map as TMap 
-import ghosts
-
-if __name__ == "__main__":
-    print("This is a module, it should not be run standalone!")
 
 # constants
 TILE_RESU = TMap.TILE_RESU
@@ -158,15 +157,36 @@ class Pacman:
     def checkCollision(self, ghosts : list, starting_positions : list):
         COLLISION_RADIUS = 5
 
+        for ghost in ghosts:
+            if(abs(self.display_x - ghost.display_x) < COLLISION_RADIUS and 
+               abs(self.display_y - ghost.display_y) < COLLISION_RADIUS and self.dead == False):
+                if not ghost.state == "SCARED" and not ghost.state == "DEAD":
+                    self.lives -= 1
+                    self.sound[1].stop()
+                    self.sound[0].play()
+                    self.dead = True
+                    if(self.lives == 0):
+                        return True
+                    return False
+                else:
+                    ghost.state = "DEAD"
+                    ghost.speed = TMap.GHOST_SPEED
+                    ghost.snapDisplayToGrid()
+        '''
         if any(abs(self.display_x - ghosts.display_x) < COLLISION_RADIUS and 
                abs(self.display_y - ghosts.display_y) < COLLISION_RADIUS for ghosts in ghosts) and self.dead == False:
-            self.lives -= 1
-            self.sound[1].stop()
-            self.sound[0].play()
-            self.dead = True
-            if(self.lives == 0):
-                return True
-            return False
+            if ghosts[0].state != "SCARED":
+                self.lives -= 1
+                self.sound[1].stop()
+                self.sound[0].play()
+                self.dead = True
+                if(self.lives == 0):
+                    return True
+                return False
+            else:
+                for ghost in ghosts:
+        '''
+
         
         if self.dead == True and self.death_frames_counter == 1:
             self.speed = 0

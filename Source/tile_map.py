@@ -1,5 +1,6 @@
 if __name__ == '__main__':
     print("This is a module, it should not be run standalone!")
+    exit()
 
 import pygame
 
@@ -40,16 +41,48 @@ lives_image = pygame.image.load("Resource\\pacman\\movement_animation\\right\\2.
 def enableDebugMode(screen_width):
     screen_width += 300
     #new screen size
-    screen = pygame.display.set_mode((screen_width + SCREEN_OFFSET * 2, SCREEN_HEIGHT + SCREEN_OFFSET * 2))
+    new_screen = pygame.display.set_mode((screen_width + SCREEN_OFFSET * 2, SCREEN_HEIGHT + SCREEN_OFFSET * 2))
+    return new_screen, screen_width
+
+def displayTitleCard(screen, enable_debug):
+    TITLE_TEXT = GAME_FONT_LARGE.render("PA MAN", True, (255, 255, 0))
+    screen.blit(TITLE_TEXT, (SCREEN_OFFSET * 18, 10))
+
+    LETTER_C = pygame.image.load("Resource\\pacman\\movement_animation\\right\\1.png")
+    LETTER_C = pygame.transform.scale(LETTER_C, (23, 23))
+    screen.blit(LETTER_C, (SCREEN_OFFSET * 18 + 41, 14))
+
+    FUNNI_TEXT = GAME_FONT.render("The I stayed up 'til 3AM for this Edition", True, (255, 255, 0))
+    screen.blit(FUNNI_TEXT, (SCREEN_OFFSET * 3, SCREEN_OFFSET * 4))
+    TM = GAME_FONT_SMALL.render("TM", True, (255, 255, 0))
+    screen.blit(TM, (SCREEN_OFFSET * 44, SCREEN_OFFSET * 3.5))
+
+    PROP_BLINKY = pygame.image.load("Resource\\ghosts\\blinky\\right.png")
+    PROP_INKY = pygame.image.load("Resource\\ghosts\\inky\\right.png")
+    PROP_PINKY = pygame.image.load("Resource\\ghosts\\pinky\\left.png")
+    PROP_CLYDE = pygame.image.load("Resource\\ghosts\\clyde\\left.png")
+
+    PROP_BLINKY = pygame.transform.scale(PROP_BLINKY, (23, 23))
+    PROP_INKY = pygame.transform.scale(PROP_INKY, (23, 23))
+    PROP_PINKY = pygame.transform.scale(PROP_PINKY, (23, 23))
+    PROP_CLYDE = pygame.transform.scale(PROP_CLYDE, (23, 23))
+
+    screen.blit(PROP_BLINKY, (SCREEN_OFFSET * 4, SCREEN_OFFSET))
+    screen.blit(PROP_INKY, (SCREEN_OFFSET * 12, SCREEN_OFFSET))
+    screen.blit(PROP_PINKY, (SCREEN_OFFSET * 34, SCREEN_OFFSET))
+    screen.blit(PROP_CLYDE, (SCREEN_OFFSET * 42, SCREEN_OFFSET))
+
+    if enable_debug:
+        DEBUG_TEXT = GAME_FONT.render("... DEBUG MODE ...", True, (255, 0, 0))
+        screen.blit(DEBUG_TEXT, (SCREEN_OFFSET * 53.5, SCREEN_OFFSET * 2.6))
 
 def displayDebugInfo(screen, pacman, ghosts_list):
-    debug_text = GAME_FONT.render("... DEBUG MODE ...", True, (255, 0, 0))
-    screen.blit(debug_text, (SCREEN_OFFSET * 54, SCREEN_OFFSET * 3.8))
-
     STATE_TEXT = GAME_FONT_SMALL.render(". STATE .", True, (255, 255, 255))
     POSITION_TEXT = GAME_FONT_SMALL.render(". POSITION .", True, (255, 255, 255))
-    screen.blit(POSITION_TEXT, (SCREEN_OFFSET * 50.5, SCREEN_OFFSET * 6.8))
-    screen.blit(STATE_TEXT, (SCREEN_OFFSET * 65.5, SCREEN_OFFSET * 6.8))
+    TIMER_TEXT = GAME_FONT_SMALL.render(". TIMER .", True, (255, 255, 255))
+    screen.blit(POSITION_TEXT, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 6.8))
+    screen.blit(STATE_TEXT, (SCREEN_OFFSET * 61.5, SCREEN_OFFSET * 6.8))
+    screen.blit(TIMER_TEXT, (SCREEN_OFFSET * 69.5, SCREEN_OFFSET * 6.8))
 
     #display pacman info
     PACMAN_NAME = GAME_FONT_SMALL.render("PACMAN", True, (255, 255, 0))
@@ -62,9 +95,9 @@ def displayDebugInfo(screen, pacman, ghosts_list):
     screen.blit(PACMAN_NAME, (SCREEN_OFFSET * 49, SCREEN_OFFSET * 8.8))
     screen.blit(PACMAN_POS_TEXT, (SCREEN_OFFSET * 54, SCREEN_OFFSET * 8.8))
     screen.blit(GAME_FONT_SMALL.render(("ALIVE" if pacman.dead == False else "DEAD"), True, (255, 255, 255)), 
-                (SCREEN_OFFSET * 67, SCREEN_OFFSET * 8.8))
+                (SCREEN_OFFSET * 63, SCREEN_OFFSET * 8.8))
    
-    #display ghosts info
+    #display ghosts state
     for i in range(0, len(ghosts_list)):
         GHOST_NAME = GAME_FONT_SMALL.render(str(ghosts_list[i].name), True, ghost_colors[ghosts_list[i].name])
         GHOST_POS_TEXT = GAME_FONT_SMALL.render(": " + 
@@ -75,7 +108,19 @@ def displayDebugInfo(screen, pacman, ghosts_list):
         GHOST_STATE_TEXT = GAME_FONT_SMALL.render(ghosts_list[i].state, True, (255, 255, 255))
         screen.blit(GHOST_NAME, (SCREEN_OFFSET * 49, SCREEN_OFFSET * (12.8 + i * 2)))
         screen.blit(GHOST_POS_TEXT, (SCREEN_OFFSET * 54, SCREEN_OFFSET * (12.8 + i * 2)))
-        screen.blit(GHOST_STATE_TEXT, (SCREEN_OFFSET * 67, SCREEN_OFFSET * (12.8 + i * 2)))
+        screen.blit(GHOST_STATE_TEXT, (SCREEN_OFFSET * 63, SCREEN_OFFSET * (12.8 + i * 2)))
+    
+    #display ghost state timer
+    for i in range(0, len(ghosts_list)):
+        if ghosts_list[i].state == "SCATTER":
+            GHOST_TIMER_TEXT = GAME_FONT_SMALL.render(str(ghosts_list[i].scatter_time), True, (255, 255, 255))
+            screen.blit(GHOST_TIMER_TEXT, (SCREEN_OFFSET * 72, SCREEN_OFFSET * (12.8 + i * 2)))
+        if ghosts_list[i].state == "CHASE":
+            GHOST_TIMER_TEXT = GAME_FONT_SMALL.render(str(ghosts_list[i].chase_time), True, (255, 255, 255))
+            screen.blit(GHOST_TIMER_TEXT, (SCREEN_OFFSET * 72, SCREEN_OFFSET * (12.8 + i * 2)))
+        if ghosts_list[i].state == "SCARED":
+            GHOST_TIMER_TEXT = GAME_FONT_SMALL.render(str(ghosts_list[i].scared_time), True, (255, 255, 255))
+            screen.blit(GHOST_TIMER_TEXT, (SCREEN_OFFSET * 72, SCREEN_OFFSET * (12.8 + i * 2)))
 
 def displayGameInfo(screen, pacman):
     #display pacman lives
@@ -87,10 +132,6 @@ def displayGameInfo(screen, pacman):
     #display score
     SCORE_TEXT = GAME_FONT.render("SCORE: " + str(69420), True, (255, 255, 255)) #placeholder value, replace with score variable
     screen.blit(SCORE_TEXT, (SCREEN_OFFSET * 35, SCREEN_HEIGHT - 20))
-
-    #display game name
-    GAME_NAME = GAME_FONT_LARGE.render("PACMAN", True, (255, 255, 0))
-    screen.blit(GAME_NAME, (SCREEN_OFFSET * 18, 0 + 30))
 
 def flashText(screen, last_toggle_time, show_text, text, text2):
     current_time = pygame.time.get_ticks() 

@@ -1,10 +1,10 @@
 import heapq
+import random
 from collections import deque
 
 if __name__ == '__main__':
     print("This is a module. Not meant to be run standalone.")
 
-# this will hold the pathfinding algorithms like bfs, dfs, a*, etc.
 def bfs(grid, start, goal, expanded, ghost_list):
     #initialize variable
     rows, cols = len(grid), len(grid[0])
@@ -195,17 +195,16 @@ def a_star(grid, start, goal, expanded, ghost_list):
     return None  # No path found
 
 def find_direction(path): 
-
     direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
 
     return switch_case(direction)
 
 def switch_case(direction):
-    
     switcher = {
         (0, -1): "LEFT",
         (0, 1): "RIGHT",
         (-1, 0): "UP",
         (1, 0) : "DOWN"
     }
+
     return switcher.get(direction, "Invalid")  # Default case 

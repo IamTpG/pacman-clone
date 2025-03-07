@@ -48,12 +48,16 @@ def loadGhostFrames(name):
     pinky_RIGHT = pygame.image.load("Resource\\ghosts\\" + name + "\\right.png")
 
     feared = pygame.image.load("Resource\\ghosts\\feared.png")
-    dead = pygame.image.load("Resource\\ghosts\\dead.png")
+    feared2 = pygame.image.load("Resource\\ghosts\\feared2.png")
+    deadUP = pygame.image.load("Resource\\ghosts\\deadUp.png")
+    deadDOWN = pygame.image.load("Resource\\ghosts\\deadDown.png")
+    deadLEFT = pygame.image.load("Resource\\ghosts\\deadLeft.png")
+    deadRIGHT = pygame.image.load("Resource\\ghosts\\deadRight.png")
 
-    blinky_frames = [blinky_DOWN, blinky_UP, blinky_LEFT, blinky_RIGHT, feared, dead]
-    inky_frames = [inky_DOWN, inky_UP, inky_LEFT, inky_RIGHT, feared, dead]
-    clyde_frames = [clyde_DOWN, clyde_UP, clyde_LEFT, clyde_RIGHT, feared, dead]
-    pinky_frames = [pinky_DOWN, pinky_UP, pinky_LEFT, pinky_RIGHT, feared, dead]
+    blinky_frames = [blinky_DOWN, blinky_UP, blinky_LEFT, blinky_RIGHT, feared, feared2, deadDOWN, deadUP, deadLEFT, deadRIGHT]
+    inky_frames   = [inky_DOWN,   inky_UP,   inky_LEFT,   inky_RIGHT,   feared, feared2, deadDOWN, deadUP, deadLEFT, deadRIGHT]
+    clyde_frames  = [clyde_DOWN,  clyde_UP,  clyde_LEFT,  clyde_RIGHT,  feared, feared2, deadDOWN, deadUP, deadLEFT, deadRIGHT]
+    pinky_frames  = [pinky_DOWN,  pinky_UP,  pinky_LEFT,  pinky_RIGHT,  feared, feared2, deadDOWN, deadUP, deadLEFT, deadRIGHT]
 
     for i in range(6):
         blinky_frames[i] = pygame.transform.scale(blinky_frames[i], (GHOST_RADIUS * SCALING_FACTOR * 2, GHOST_RADIUS * SCALING_FACTOR * 2))
@@ -84,11 +88,11 @@ class Ghost:
         self.all_possible_states = ["NONE", "SCARED", "DEAD", "SCATTER", "CHASE"]
         self.state = starting_state[1]
         
-        self.MAX_FEARED_TIME = 300
+        self.MAX_SCARED_TIME = 50
         self.MAX_SCATTER_TIME = starting_state[0]
 
         self.scatter_time = starting_state[0]
-        self.feared_time = 0
+        self.scared_time = 0
 
         # lock turning
         self.lock_turn_time = 0
@@ -98,6 +102,7 @@ class Ghost:
         self.speed = GHOST_SPEED
         self.x = starting_position[0]
         self.y = starting_position[1]
+        #self.target = ["PACMAN", "GHOST_HOUSE", "CORNER"] # if dead, go to ghost house, if scattering, go to corner, else go to pacman
 
         # display
         self.radius = GHOST_RADIUS
@@ -123,14 +128,8 @@ class Ghost:
         self.snapDisplayToGrid()
     
     def getDirection(self, tile_map, pacman, ghost_list):  
-        expanded = set()
-        path = Pfinder.a_star(tile_map,(self.y,self.x), (pacman.y,pacman.x),  expanded, ghost_list) 
-        if path is 'NONE' :
-            direction = (0,0)
-            # debug print("No path found")
-            return "STAY"
-        direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
-        return Pfinder.switch_case(direction) #1/ why switched_case undifined ? - Neidy 
+        # abstract method
+        raise NotImplementedError("Subclass must implement abstract method")
 
     def getRandomDirection(self, tile_map):  
         possible_turns = {
@@ -187,15 +186,26 @@ class Ghost:
             self.snapDisplayToGrid()
             self.direction = self.getDirection(tile_map, pacman, ghost_list)
         
-        VERTICAL_OFFSET = 3
-        HORIZONTAL_OFFSET = 2
-        
         update_direction = {
             "UP": (0, -self.speed, 0, -1),
             "DOWN": (0, self.speed, 0, 1),
             "LEFT": (-self.speed, 0, -1, 0),
             "RIGHT": (self.speed, 0, 1, 0)
         }
+
+        #ghosts move slower when they are in the tunnel
+        if(self.state != "SCARED" and self.state != "DEAD"):
+            if(self.y == 19 and self.x == 5 and self.direction == "LEFT" and self.speed == 2) or (self.y == 19 and self.x == 24 and self.direction == "RIGHT" and self.speed == 2):
+                self.speed = GHOST_SPEED // 2
+            if (self.y == 19 and self.x == 5 and self.direction == "RIGHT" and self.speed == 1) or (self.y == 19 and self.x == 24 and self.direction == "LEFT" and self.speed == 1):
+                self.speed = GHOST_SPEED
+                if(self.direction == "RIGHT"): self.display_x += 1
+                if(self.direction == "LEFT"): self.display_x -= 1
+                # some weird freaky shit happens when they leave the tunnel leaving self.display_x an odd number even though i called the snap to grid function,
+                # making it impossible for them to snap to grid, so this just adjusts for that
+            
+        VERTICAL_OFFSET = 3
+        HORIZONTAL_OFFSET = 2
 
         if (self.direction in update_direction):
             self.display_x += update_direction[self.direction][0]
@@ -207,30 +217,32 @@ class Ghost:
                     self.y += update_direction[self.direction][3]
                     if self.lock_turn_time > 0: self.lock_turn_time -= 1
                     if self.scatter_time > 0: self.scatter_time -= 1
+                    if self.scared_time > 0: self.scared_time -= 1
             if(self.direction == "LEFT" or self.direction == "RIGHT"):
                 if(self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
                     self.x += update_direction[self.direction][2]
                     self.y += update_direction[self.direction][3]
                     if self.lock_turn_time > 0: self.lock_turn_time -= 1
                     if self.scatter_time > 0: self.scatter_time -= 1
+                    if self.scared_time > 0: self.scared_time -= 1
 
         if (self.display_x < SCREEN_OFFSET + self.radius and self.direction == "LEFT"): 
             self.display_x = SCREEN_WIDTH
             self.x = MAP_WIDTH
+            self.snapDisplayToGrid()
         if (self.display_x > SCREEN_WIDTH and self.direction == "RIGHT"):  
             self.display_x = SCREEN_OFFSET
             self.x = 0
+            self.snapDisplayToGrid()
 
         if(self.scatter_time == 0 and self.state == "SCATTER"):
             self.state = "CHASE"
 
-        if(self.state == "SCARED"):
-            self.feared_time -= 1
-            self.speed = 1
-            if(self.feared_time == 0):
-                self.feared_state = False
-                self.snapDisplayToGrid()
-                self.speed = 2
+        if(self.scared_time == 0 and self.state == "SCARED"):
+            self.state = "SCATTER"
+            self.scatter_time = self.MAX_SCATTER_TIME
+            self.snapDisplayToGrid()
+            self.speed = GHOST_SPEED
     
     def render(self, screen):
         direction_mapping = {
@@ -239,11 +251,16 @@ class Ghost:
             "LEFT": 2,
             "RIGHT": 3
         }
-
-        if(self.state == "SCARED"):
-            screen.blit(self.frames[4], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
-        elif(self.state == "DEAD"):
-            screen.blit(self.frames[5], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
+ 
+        if(self.state == "SCARED"): # when scared timer is less than 25% of the max time, blink
+            if(self.scared_time % 4 == 0 and self.scared_time < 0.25 * self.MAX_SCARED_TIME):
+                screen.blit(self.frames[5], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
+            else:
+                screen.blit(self.frames[4], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
+        elif(self.state == "DEAD"): 
+            screen.blit(self.frames[direction_mapping[self.direction] + 6], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
+        elif(self.state == "FROZEN"):
+            pass # display nothing
         else:
             screen.blit(self.frames[direction_mapping[self.direction]], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
         
@@ -270,9 +287,8 @@ class Blinky(Ghost): # blinky (red) use A_star search
             direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
             if(not self.state == "SCARED"):
                 return Pfinder.switch_case(direction)
-            else:
-                return opposite_direction[Pfinder.switch_case(direction)]
-                #run away from pacman if scared
+            else: 
+                return super().getRandomDirection(tile_map)
 
 class Inky(Ghost): # inky (blue) use BFS search
     def __init__(self, starting_position, direction, starting_scatter_time):
@@ -286,7 +302,7 @@ class Inky(Ghost): # inky (blue) use BFS search
             "RIGHT": "LEFT"
         }
 
-        if (self.state == "SCATTER" or self.state == "SCARED"):
+        if (self.state == "SCATTER"):
             return super().getRandomDirection(tile_map)
         else:
             expanded = set()
@@ -300,8 +316,7 @@ class Inky(Ghost): # inky (blue) use BFS search
             if (not self.state == "SCARED"):
                 return Pfinder.switch_case(direction)
             else:
-                #run away from pacman if scared
-                return opposite_direction[Pfinder.switch_case(direction)]
+                return super().getRandomDirection(tile_map)
 
 class Clyde(Ghost): # clyde (orange) use UCS search
     def __init__(self, starting_position, direction, starting_scatter_time):
@@ -315,7 +330,7 @@ class Clyde(Ghost): # clyde (orange) use UCS search
             "RIGHT": "LEFT"
         }
 
-        if (self.state == "SCATTER" or self.state == "SCARED"):
+        if (self.state == "SCATTER"):
             return super().getRandomDirection(tile_map)
         else:
             expanded = set()
@@ -328,9 +343,8 @@ class Clyde(Ghost): # clyde (orange) use UCS search
 
             if (not self.state == "SCARED"):
                 return Pfinder.switch_case(direction)
-            else:
-                #run away from pacman if scared
-                return opposite_direction[Pfinder.switch_case(direction)]
+            else: 
+                return super().getRandomDirection(tile_map)
     
 class Pinky(Ghost): # pinky (pink) use DFS search
     def __init__(self, starting_position, direction, starting_scatter_time):
@@ -358,5 +372,5 @@ class Pinky(Ghost): # pinky (pink) use DFS search
             if(not self.state == "SCARED"):
                 return Pfinder.switch_case(direction) 
             else:
-                return opposite_direction[Pfinder.switch_case(direction)]
-                #run away from pacman if scared
+                return super().getRandomDirection(tile_map)
+            

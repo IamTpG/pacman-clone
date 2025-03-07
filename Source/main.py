@@ -93,6 +93,14 @@ while running:
                 pacman.queue_turn = input_mapping[event.key]
                 pacman.queue_time = pacman.MAX_QUEUE_TIME
 
+            #debug, turn ghosts into scared mode
+            if (event.key == pygame.constants.K_SPACE):
+                for ghost in ghosts_list:
+                    ghost.state = "SCARED"
+                    ghost.speed = TMap.GHOST_SPEED / 2
+                    ghost.snapDisplayToGrid()
+                    ghost.scared_time = ghost.MAX_SCARED_TIME
+
     # update pacman
     pacman.update(tilemap.tilemap)
 

@@ -179,6 +179,7 @@ class Pacman:
             self.resetPosition(starting_positions[0], "NONE")
             self.speed = PACMAN_SPEED
             self.lock_turn_time = 0
+            self.queue_turn = "NONE"
             for i in range(4):
                 ghosts[i].resetPosition(starting_positions[i + 1], "UP")
                 ghosts[i].unfreeze()

@@ -81,8 +81,9 @@ def loadPacmanSound():
     chomping_sfx = pygame.mixer.Sound("Resource\\sfx\\pacman_chomp.wav")
     eat_fruit_sfx = pygame.mixer.Sound("Resource\\sfx\\pacman_eatfruit.wav")
     eat_ghost_sfx = pygame.mixer.Sound("Resource\\sfx\\pacman_eatghost.wav")
+    eat_power_pellet_sfx = pygame.mixer.Sound("Resource\\sfx\\power_up.wav")
 
-    sounds = [death_sfx, chomping_sfx, eat_fruit_sfx, eat_ghost_sfx]
+    sounds = [death_sfx, chomping_sfx, eat_fruit_sfx, eat_ghost_sfx, eat_power_pellet_sfx]
 
     VOLUME = 0.5
     for i in range(4):
@@ -116,7 +117,7 @@ class Pacman:
 
         # stuff
         self.dead = False
-        self.lives = 3
+        self.lives = 3 # default 3
         self.direction = direction
         self.speed = 2 
         self.x = starting_postion[0]
@@ -159,15 +160,17 @@ class Pacman:
         for ghost in ghosts:
             if(abs(self.display_x - ghost.display_x) < COLLISION_RADIUS and 
                abs(self.display_y - ghost.display_y) < COLLISION_RADIUS and self.dead == False):
-                if not ghost.state == "SCARED" and not ghost.state == "DEAD":
+                if(ghost.state == "DEAD"):
+                    continue
+                elif ghost.state != "SCARED":
+                    TMap.pauseScreen(400)
                     self.lives -= 1
                     self.sound[1].stop()
                     self.sound[0].play()
                     self.dead = True
-                    if(self.lives == 0):
-                        return True
-                    return False
                 else:
+                    TMap.pauseScreen(200)
+                    self.sound[3].play()
                     tile_map.score += 200
                     ghost.state = "DEAD"
                     ghost.speed = TMap.GHOST_SPEED
@@ -178,7 +181,6 @@ class Pacman:
             for ghost in ghosts:
                 ghost.state = "FROZEN"
                 ghost.freeze()
-            return False
         
         if self.dead == True and self.death_frames_counter == self.MAX_DEATH_FRAMES_DURATION * 10:
             self.resetPosition(starting_positions[0], "NONE")
@@ -190,7 +192,10 @@ class Pacman:
                 ghosts[i].unfreeze()
                 ghosts[i].state = "SCATTER"
                 ghosts[i].scatter_time = ghosts[i].MAX_SCATTER_TIME
-            return False
+            self.dead = False
+            self.death_frames_counter = 0
+            if(self.lives == 0):
+                return True
 
     def canTurn(self, tile_map, wanted_direction):
         if wanted_direction == "NONE" or wanted_direction == self.direction:
@@ -199,6 +204,9 @@ class Pacman:
         return not self.checkObstructionDirection(tile_map, wanted_direction)
 
     def eatFood(self, tile_map, ghost_list):
+        if self.dead == True:
+            return
+        
         score_value = {
         -2: 10,    # Pellet
         -3: 20,    # Power pellet
@@ -216,13 +224,15 @@ class Pacman:
                 tile_map.pellet_count -= 1
             elif (value == -3):
                 tile_map.pellet_count -= 1
+                self.sound[4].play()
                 for ghost in ghost_list:
-                    if ghost.state == "SCATTER" or ghost.state == "CHASE":
+                    if ghost.state != "DEAD":
                         ghost.state = "SCARED"
                         ghost.speed = TMap.GHOST_SPEED / 2
-                        ghost.snapDisplayToGrid()
+                        if(ghost.state != "SCARED"):    ghost.snapDisplayToGrid()
                         ghost.scared_time = ghost.MAX_SCARED_TIME
-            
+            else:
+                self.sound[2].play()
 
     def update(self, tile_map):
         # reset queue turn if time runs out
@@ -324,7 +334,3 @@ class Pacman:
             frame_index = (self.death_frames_counter // self.MAX_DEATH_FRAMES_DURATION) % 11
             screen.blit(self.death_frames[frame_index], (self.display_x - PACMAN_RADIUS, self.display_y - PACMAN_RADIUS))
             self.death_frames_counter += 1
-            if(frame_index == 10):
-                self.dead = False
-                self.death_frames_counter = 0
-                self.frame_counter = 0

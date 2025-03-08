@@ -33,7 +33,7 @@ def bfs(grid, start, goal, expanded, ghost_list):
                 continue
             if (v[1] < 1 or v[1] > cols):
                 continue
-            if (grid[v[0]][v[1]] != -1):
+            if (grid[v[0]][v[1]] > -1):
                 continue
             if (v in expanded):
                 continue
@@ -98,7 +98,7 @@ def ucs(grid, start, goal, expanded, ghost_list):
                 continue
             if (v[1] < 1 or v[1] > cols):
                 continue
-            if (grid[v[0]][v[1]] != -1):
+            if (grid[v[0]][v[1]] > -1):
                 continue
             if (v in expanded):
                 continue
@@ -140,7 +140,7 @@ def dfs_recursive_ordered(grid, start, visited, goal,expanded_list, ghost_list):
     for di, dj in directions:
         ni = di + start[0]
         nj = dj + start[1]
-        if 1 <= nj <= cols and 1 <= ni <= rows and grid[ni][nj] == -1:
+        if 1 <= nj <= cols and 1 <= ni <= rows and grid[ni][nj] <= -1:
            
             if ((ni,nj)) not in visited:
                 expanded_list.append((ni,nj))
@@ -185,7 +185,7 @@ def a_star(grid, start, goal, expanded, ghost_list):
         for di, dj in directions:
             ni, nj = i + di, j + dj 
             neighbor = (ni, nj)
-            if 0 <= ni < rows and 0 <= nj < cols and grid[ni][nj] == -1 and neighbor not in expanded:
+            if 0 <= ni < rows and 0 <= nj < cols and grid[ni][nj] <= -1 and neighbor not in expanded:
                 #update and add it without needing to update old status
                 #because the which one has better priority will be taken first
                 #and add into expanded

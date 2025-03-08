@@ -33,11 +33,13 @@ input_mapping = {
 }
 
 # game loop 
-update_region = pygame.Rect(0, SCREEN_OFFSET * 7, SCREEN_WIDTH + SCREEN_OFFSET, SCREEN_HEIGHT + SCREEN_OFFSET)
+update_region = pygame.Rect(0, SCREEN_OFFSET * 7, SCREEN_WIDTH + SCREEN_OFFSET * 2, SCREEN_HEIGHT + SCREEN_OFFSET * 2)
 screen = pygame.display.set_mode((SCREEN_WIDTH + SCREEN_OFFSET * 2, SCREEN_HEIGHT + SCREEN_OFFSET * 2))
 clock = pygame.time.Clock()
 running = True
 start = False
+win = False
+quiting = False
 
 # initialize objects
 pacman_starting_position = (15, 28)
@@ -63,39 +65,36 @@ tilemap = TMap.Tilemap("Resource\\map\\map.png")
 READY_TEXT = GAME_FONT.render("READY!", True, (255, 255, 0))
 BLACK_READY_TEXT = GAME_FONT.render("READY!", True, (0, 0, 0))
 intro_sfx = pygame.mixer.Sound("Resource\\sfx\\intro.wav")
-intro_sfx.set_volume(0.5)
+intro_sfx.set_volume(0.3)
 start = True
 enable_intro = True
 
 # pause time
-pause_time = 1 #milliseconds #original 4500
+pause_time = 4500 #milliseconds #original 4500
 pausing = pygame.time.get_ticks() + pause_time
 
 #debug mode
-enable_debug = True
+enable_debug = False #default False
 key_order = [pygame.K_d, pygame.K_e, pygame.K_b, pygame.K_u, pygame.K_g, pygame.K_m, pygame.K_o, pygame.K_d, pygame.K_e] #[debugmode]
 debug_input_queue = []
 
-while (running):
+#debug
+print("Fix these pngs files bruh")
+
+while (running): 
     for event in pygame.event.get():
         if (event.type == pygame.QUIT):
             running = False
+            quiting = True
 
         if (event.type == pygame.KEYDOWN):
             if (event.key == pygame.constants.K_ESCAPE):
                 running = False
+                quiting = True
 
             if (event.key in input_mapping and pacman.lock_turn_time == 0 and not pacman.dead):
                 pacman.queue_turn = input_mapping[event.key]
                 pacman.queue_time = pacman.MAX_QUEUE_TIME
-
-            #debug, turn ghosts into scared mode
-            if (event.key == pygame.constants.K_SPACE):
-                for ghost in ghosts_list:
-                    ghost.state = "SCARED"
-                    ghost.speed = TMap.GHOST_SPEED / 2
-                    ghost.snapDisplayToGrid()
-                    ghost.scared_time = ghost.MAX_SCARED_TIME
 
     # update pacman
     pacman.update(tilemap.tilemap) 
@@ -109,11 +108,12 @@ while (running):
 
     # check collision
     if (pacman.checkCollision(tilemap, ghosts_list, starting_positions)):
+        win = False
         running = False
 
     if (tilemap.pellet_count == 0):
-        print("YOU WIN!")
-        #running = False
+        win = True
+        running = False
 
     # render objects
     tilemap.render(screen)
@@ -137,8 +137,9 @@ while (running):
 
     # starting sequence
     if (start and enable_intro):
+        TMap.displayTitleCard(screen, enable_debug)
         start = False
-        #intro_sfx.play()
+        intro_sfx.play()
         last_toggle_time = 0
         show_text = True
         while (pygame.time.get_ticks() < pausing):
@@ -165,8 +166,18 @@ while (running):
             update_region = pygame.Rect(0, SCREEN_OFFSET * 7, new_screen_width + SCREEN_OFFSET, SCREEN_HEIGHT + SCREEN_OFFSET)
 
         TMap.displayTitleCard(screen, enable_debug)
-    
+        tilemap.start_time = pygame.time.get_ticks()
     FPS = 60
     clock.tick(FPS) 
+
+# display endcard
+if(not quiting):
+    update_region = TMap.displayEndCard(screen, win, tilemap)
+    pygame.display.update(update_region)
+    ending = True
+    while (ending):
+        for event in pygame.event.get():
+            if (event.type == pygame.QUIT or event.type == pygame.KEYDOWN):
+                ending = False
 
 pygame.quit()

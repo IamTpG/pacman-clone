@@ -24,7 +24,7 @@ SCREEN_HEIGHT = TMap.SCREEN_HEIGHT
 GHOST_RADIUS = TMap.GHOST_RADIUS
 GHOST_SPEED = TMap.GHOST_SPEED
 
-SCALING_FACTOR = 1.1
+SCALING_FACTOR = 1.2
 
 opposite_direction = {
     "UP": "DOWN",
@@ -54,8 +54,8 @@ def loadGhostFrames(name):
     pinky_LEFT  = pygame.image.load("Resource\\ghosts\\" + name + "\\left.png")
     pinky_RIGHT = pygame.image.load("Resource\\ghosts\\" + name + "\\right.png")
 
-    feared      = pygame.image.load("Resource\\ghosts\\feared.png")
-    feared2     = pygame.image.load("Resource\\ghosts\\feared2.png")
+    feared      = pygame.image.load("Resource\\ghosts\\scared.png")
+    feared2     = pygame.image.load("Resource\\ghosts\\scared2.png")
     deadUP      = pygame.image.load("Resource\\ghosts\\deadUp.png")
     deadDOWN    = pygame.image.load("Resource\\ghosts\\deadDown.png")
     deadLEFT    = pygame.image.load("Resource\\ghosts\\deadLeft.png")
@@ -96,9 +96,9 @@ class Ghost:
         self.all_possible_states = ["NONE", "SCARED", "DEAD", "SCATTER", "CHASE"]
         self.state = "SCATTER" # default starting state
         
-        self.MAX_SCARED_TIME  = 500
-        self.MAX_SCATTER_TIME = 750
-        self.MAX_CHASE_TIME   = 750
+        self.MAX_SCARED_TIME  = 400
+        self.MAX_SCATTER_TIME = 400
+        self.MAX_CHASE_TIME   = 800
 
         self.scatter_time = self.MAX_SCATTER_TIME
         self.scared_time  = 0
@@ -254,7 +254,7 @@ class Ghost:
 
         if (self.scared_time == 0 and self.state == "SCARED"):
             self.state = "SCATTER"
-            self.scatter_time = self.MAX_SCATTER_TIME
+            self.scatter_time = int(self.MAX_SCATTER_TIME / 2)
             self.direction = opposite_direction[self.direction]
             self.snapDisplayToGrid()
             self.speed = GHOST_SPEED
@@ -319,7 +319,7 @@ class Inky(Ghost): # inky (blue) use BFS search
     def getDirection(self, tile_map, pacman, ghost_list):  
         target = (0, 0)
 
-        if (self.state == "SCATTER"):
+        if (self.state == "SCATTER" or self.state == "SCARED"):
             return super().getRandomDirection(tile_map)
         elif (self.state == "DEAD"):
             target = (19, 15) #return to ghost house
@@ -333,11 +333,7 @@ class Inky(Ghost): # inky (blue) use BFS search
             return self.direction # keep moving forward if no path is found
         
         direction = Pfinder.find_direction(path)
-
-        if (not self.state == "SCARED"):
-            return direction
-        else:
-            return super().getRandomDirection(tile_map)
+        return direction
 
 class Clyde(Ghost): # clyde (orange) use UCS search
     def __init__(self, starting_position, direction):
@@ -346,7 +342,7 @@ class Clyde(Ghost): # clyde (orange) use UCS search
     def getDirection(self, tile_map, pacman, ghost_list):  
         target = (0, 0)
 
-        if (self.state == "SCATTER"):
+        if (self.state == "SCATTER" or self.state == "SCARED"):
             return super().getRandomDirection(tile_map)
         elif (self.state == "DEAD"):
             target = (19, 15) #return to ghost house
@@ -359,11 +355,7 @@ class Clyde(Ghost): # clyde (orange) use UCS search
             return self.direction # keep moving forward if no path is found
         
         direction = Pfinder.find_direction(path)
-
-        if (not self.state == "SCARED"):
-            return direction
-        else: 
-            return super().getRandomDirection(tile_map)
+        return direction
     
 class Pinky(Ghost): # pinky (pink) use DFS search
     def __init__(self, starting_position, direction):
@@ -373,7 +365,7 @@ class Pinky(Ghost): # pinky (pink) use DFS search
     def getDirection(self, tile_map, pacman, ghost_list):  
         target = (0, 0)
 
-        if (self.state == "SCATTER"):
+        if (self.state == "SCATTER" or self.state == "SCARED"):
             return super().getRandomDirection(tile_map)
         elif (self.state == "DEAD"):
             target = (19, 15) #return to ghost house
@@ -423,9 +415,5 @@ class Pinky(Ghost): # pinky (pink) use DFS search
             return self.direction # keep moving forward if no path is found
 
         direction = Pfinder.find_direction(path)
-
-        if (not self.state == "SCARED"):
-            return direction
-        else:
-            return super().getRandomDirection(tile_map)
+        return direction
             

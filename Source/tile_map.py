@@ -4,6 +4,9 @@ if __name__ == '__main__':
 
 import pygame
 
+pygame.display.set_caption("Pacman")
+pygame.display.set_icon(pygame.image.load("Resource\\ghosts\\blinky\\right.png"))
+
 TILE_RESU = 8   # Tile size in .png
 TILE_SIZE = 16  # Tile size to render
 
@@ -36,6 +39,20 @@ GAME_FONT_LARGE = pygame.font.Font("Resource\\text_font\\Emulogic-zrEw.ttf", 21)
 
 #load pngs
 lives_image = pygame.image.load("Resource\\pacman\\movement_animation\\right\\2.png")
+PROP_BLINKY = pygame.image.load("Resource\\ghosts\\blinky\\right.png")
+PROP_INKY = pygame.image.load("Resource\\ghosts\\inky\\right.png")
+PROP_PINKY = pygame.image.load("Resource\\ghosts\\pinky\\left.png")
+PROP_CLYDE = pygame.image.load("Resource\\ghosts\\clyde\\left.png")
+PROP_SCARED_GHOST = pygame.image.load("Resource\\ghosts\\scared.png")
+LETTER_C = pygame.image.load("Resource\\pacman\\movement_animation\\right\\1.png")
+PACMAN_UP = pygame.image.load("Resource\\pacman\\movement_animation\\up\\1.png")
+
+def pauseScreen(time):
+    start_time = pygame.time.get_ticks()
+    while pygame.time.get_ticks() - start_time < time:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return True
 
 # debug mode
 def enableDebugMode(screen_width):
@@ -48,33 +65,58 @@ def displayTitleCard(screen, enable_debug):
     TITLE_TEXT = GAME_FONT_LARGE.render("PA MAN", True, (255, 255, 0))
     screen.blit(TITLE_TEXT, (SCREEN_OFFSET * 18, 10))
 
-    LETTER_C = pygame.image.load("Resource\\pacman\\movement_animation\\right\\1.png")
-    LETTER_C = pygame.transform.scale(LETTER_C, (23, 23))
-    screen.blit(LETTER_C, (SCREEN_OFFSET * 18 + 41, 14))
+    screen.blit(pygame.transform.scale(LETTER_C, (23, 23)), (SCREEN_OFFSET * 18 + 41, 14))
 
     FUNNI_TEXT = GAME_FONT.render("The I stayed up 'til 3AM for this Edition", True, (255, 255, 0))
     screen.blit(FUNNI_TEXT, (SCREEN_OFFSET * 3, SCREEN_OFFSET * 4))
     TM = GAME_FONT_SMALL.render("TM", True, (255, 255, 0))
     screen.blit(TM, (SCREEN_OFFSET * 44, SCREEN_OFFSET * 3.5))
 
-    PROP_BLINKY = pygame.image.load("Resource\\ghosts\\blinky\\right.png")
-    PROP_INKY = pygame.image.load("Resource\\ghosts\\inky\\right.png")
-    PROP_PINKY = pygame.image.load("Resource\\ghosts\\pinky\\left.png")
-    PROP_CLYDE = pygame.image.load("Resource\\ghosts\\clyde\\left.png")
-
-    PROP_BLINKY = pygame.transform.scale(PROP_BLINKY, (23, 23))
-    PROP_INKY = pygame.transform.scale(PROP_INKY, (23, 23))
-    PROP_PINKY = pygame.transform.scale(PROP_PINKY, (23, 23))
-    PROP_CLYDE = pygame.transform.scale(PROP_CLYDE, (23, 23))
-
-    screen.blit(PROP_BLINKY, (SCREEN_OFFSET * 4, SCREEN_OFFSET))
-    screen.blit(PROP_INKY, (SCREEN_OFFSET * 12, SCREEN_OFFSET))
-    screen.blit(PROP_PINKY, (SCREEN_OFFSET * 34, SCREEN_OFFSET))
-    screen.blit(PROP_CLYDE, (SCREEN_OFFSET * 42, SCREEN_OFFSET))
+    screen.blit(pygame.transform.scale(PROP_BLINKY, (23, 23)), (SCREEN_OFFSET * 4, SCREEN_OFFSET))
+    screen.blit(pygame.transform.scale(PROP_INKY, (23, 23)), (SCREEN_OFFSET * 12, SCREEN_OFFSET))
+    screen.blit(pygame.transform.scale(PROP_PINKY, (23, 23)), (SCREEN_OFFSET * 34, SCREEN_OFFSET))
+    screen.blit(pygame.transform.scale(PROP_CLYDE, (23, 23)), (SCREEN_OFFSET * 42, SCREEN_OFFSET))
 
     if enable_debug:
         DEBUG_TEXT = GAME_FONT.render("... DEBUG MODE ...", True, (255, 0, 0))
         screen.blit(DEBUG_TEXT, (SCREEN_OFFSET * 53.5, SCREEN_OFFSET * 2.6))
+
+def displayEndCard(screen, win, tile_map):
+    end_card_region = pygame.rect.Rect(SCREEN_OFFSET * 9, SCREEN_OFFSET * 20, SCREEN_OFFSET * 30.5, SCREEN_OFFSET * 20)
+    pygame.draw.rect(screen, (0, 0, 0), end_card_region)
+    pygame.draw.rect(screen, (255, 255, 0), end_card_region, 2)
+
+    if win:
+        victory_sfx = pygame.mixer.Sound("Resource\\sfx\\victory.wav")
+        victory_sfx.set_volume(0.3)
+        victory_sfx.play()
+        
+        WIN_TEXT = GAME_FONT_LARGE.render("YOU WIN!", True, (255, 255, 0))
+        screen.blit(WIN_TEXT, (SCREEN_OFFSET * 16, SCREEN_OFFSET * 22))
+        screen.blit(pygame.transform.scale(LETTER_C, (30, 30)), (SCREEN_OFFSET * 12, SCREEN_OFFSET * 26))
+        for i in range(4):
+            screen.blit(pygame.transform.scale(PROP_SCARED_GHOST, (30, 30)), (SCREEN_OFFSET * 17 + i * 50, SCREEN_OFFSET * 25.8))
+    else:
+        LOSE_TEXT = GAME_FONT_LARGE.render("GAME OVER!", True, (255, 0, 0))
+        screen.blit(LOSE_TEXT, (SCREEN_OFFSET * 14, SCREEN_OFFSET * 22))
+        screen.blit(pygame.transform.scale(PACMAN_UP, (30, 30)), (SCREEN_OFFSET * 23, SCREEN_OFFSET * 26))
+        screen.blit(pygame.transform.scale(PROP_BLINKY, (30, 30)), (SCREEN_OFFSET * 17 - 40, SCREEN_OFFSET * 25.8))
+        screen.blit(pygame.transform.scale(PROP_INKY, (30, 30)), (SCREEN_OFFSET * 17 + 10, SCREEN_OFFSET * 25.8))
+        screen.blit(pygame.transform.scale(PROP_PINKY, (30, 30)), (SCREEN_OFFSET * 17 + 112, SCREEN_OFFSET * 25.8))
+        screen.blit(pygame.transform.scale(PROP_CLYDE, (30, 30)), (SCREEN_OFFSET * 17 + 158, SCREEN_OFFSET * 25.8))
+
+    score = GAME_FONT.render("SCORE      : " + str(int(tile_map.score)), True, (255, 150, 0))
+    screen.blit(score, (SCREEN_OFFSET * 15, SCREEN_OFFSET * 30))
+
+    time_elapsed = pygame.time.get_ticks() - tile_map.start_time
+
+    time_played = GAME_FONT.render("TIME PLAYED: " + str(time_elapsed // 1000) + "s", True, (255, 150, 0))
+    screen.blit(time_played, (SCREEN_OFFSET * 15, SCREEN_OFFSET * 33))
+
+    exit_text = GAME_FONT_SMALL.render("Press Any Key to exit.", True, (0, 150, 255))
+    screen.blit(exit_text, (SCREEN_OFFSET * 15.5, SCREEN_OFFSET * 37))
+
+    return end_card_region
 
 def displayDebugInfo(screen, pacman, ghosts_list):
     STATE_TEXT = GAME_FONT_SMALL.render(". STATE .", True, (255, 255, 255))
@@ -94,9 +136,8 @@ def displayDebugInfo(screen, pacman, ghosts_list):
     
     screen.blit(PACMAN_NAME, (SCREEN_OFFSET * 49, SCREEN_OFFSET * 8.8))
     screen.blit(PACMAN_POS_TEXT, (SCREEN_OFFSET * 54, SCREEN_OFFSET * 8.8))
-    screen.blit(GAME_FONT_SMALL.render(("ALIVE" if pacman.dead == False else "DEAD"), True, (255, 255, 255)), 
-                (SCREEN_OFFSET * 63, SCREEN_OFFSET * 8.8))
-   
+    screen.blit(GAME_FONT_SMALL.render(("ALIVE" if pacman.dead == False else "DEAD"), True, (255, 255, 255)), (SCREEN_OFFSET * 63, SCREEN_OFFSET * 8.8))
+
     #display ghosts state
     for i in range(0, len(ghosts_list)):
         GHOST_NAME = GAME_FONT_SMALL.render(str(ghosts_list[i].name), True, ghost_colors[ghosts_list[i].name])
@@ -133,6 +174,10 @@ def displayGameInfo(screen, pacman, tile_map):
     SCORE_TEXT = GAME_FONT.render("SCORE: " + str(int(tile_map.score)), True, (255, 255, 255)) #placeholder value, replace with score variable
     screen.blit(SCORE_TEXT, (SCREEN_OFFSET * 35, SCREEN_HEIGHT - 20))
 
+    #display pellets left
+    PELLETS_COUNT = GAME_FONT_SMALL.render(str(tile_map.pellet_count), True, (255, 255, 255))
+    screen.blit(PELLETS_COUNT, (SCREEN_OFFSET * 72, SCREEN_OFFSET * 8.8))
+
 def flashText(screen, last_toggle_time, show_text, text, text2):
     current_time = pygame.time.get_ticks() 
     if current_time - last_toggle_time >= 400: #switch every 200ms
@@ -140,9 +185,9 @@ def flashText(screen, last_toggle_time, show_text, text, text2):
         last_toggle_time = current_time  
 
     if show_text:
-        screen.blit(text, (SCREEN_OFFSET * 21.5, SCREEN_OFFSET * 34.6))
+        screen.blit(text, (SCREEN_OFFSET * 21.5, SCREEN_OFFSET * 37))
     else:
-        screen.blit(text2, (SCREEN_OFFSET * 21.5, SCREEN_OFFSET * 34.6))
+        screen.blit(text2, (SCREEN_OFFSET * 21.5, SCREEN_OFFSET * 37))
 
     pygame.display.flip()
 
@@ -179,9 +224,11 @@ class Tilemap:
         for i in range(len(self.food_list)):
             self.food_list[i] = pygame.transform.scale(self.food_list[i], (TILE_SIZE, TILE_SIZE))
 
-        self.pellet_count = 578 + 4 # 4 power pellets
+        self.pellet_count = 288 + 4 # 4 power pellets 
         self.score = 1000 # starting value
-    
+
+        self.start_time = 0
+
     def render(self, screen):
         self.score -= 0.1
 

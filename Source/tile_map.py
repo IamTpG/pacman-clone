@@ -177,7 +177,7 @@ def displayTestScreen(screen):
     dc2 = "This screen is used to show the pathfinding of the ghosts"
 
     dc3 = "Pacman is allowed to move freely using the arrow keys"
-    dc4 = "The ghosts are will always chase Pacman"
+    dc4 = "The ghosts will always chase Pacman"
     dc5 = "A ghost will automatically stop when it reaches pacman"
 
     dc6 = "Press (1-4) to make the ghosts move."

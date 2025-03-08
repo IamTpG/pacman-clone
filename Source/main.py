@@ -225,7 +225,11 @@ while(enable_test):
             g.update(tilemap.tilemap, pacman, gl)
             g.snapDisplayToGrid()
         
-        pacman.direction = "DOWN"
+        if(pacman.direction == "NONE"):
+            pacman.direction = "DOWN"
+
+        screen.fill((0, 0, 0), update_region)
+        pygame.display.update()
 
     for event in pygame.event.get():
         if (event.type == pygame.QUIT):
@@ -298,24 +302,28 @@ while(enable_test):
         screen.fill((0, 0, 0), update_region)
 
     if(update_blinky):
-        blinky.update(tilemap.tilemap, pacman, gl)
         if(blinky.x == pacman.x and blinky.y == pacman.y):
             update_blinky = False
+        else:
+            blinky.update(tilemap.tilemap, pacman, gl)
 
     if(update_clyde):
-        clyde.update(tilemap.tilemap, pacman, gl)
         if(clyde.x == pacman.x and clyde.y == pacman.y):
             update_clyde = False
+        else:
+            clyde.update(tilemap.tilemap, pacman, gl)
         
     if(update_inky):
-        inky.update(tilemap.tilemap, pacman, gl)
         if(inky.x == pacman.x and inky.y == pacman.y):
             update_inky = False
+        else:
+            inky.update(tilemap.tilemap, pacman, gl)
 
     if(update_pinky):
-        pinky.update(tilemap.tilemap, pacman, gl)
         if(pinky.x == pacman.x and pinky.y == pacman.y):
             update_pinky = False
+        else:
+            pinky.update(tilemap.tilemap, pacman, gl)
 
     # render objects
     tilemap.render(screen)

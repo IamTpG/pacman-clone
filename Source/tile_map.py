@@ -224,7 +224,7 @@ class Tilemap:
         for i in range(len(self.food_list)):
             self.food_list[i] = pygame.transform.scale(self.food_list[i], (TILE_SIZE, TILE_SIZE))
 
-        self.pellet_count = 288 + 4 # 4 power pellets 
+        self.pellet_count = 285 + 4 # 4 power pellets 
         self.score = 1000 # starting value
 
         self.start_time = 0

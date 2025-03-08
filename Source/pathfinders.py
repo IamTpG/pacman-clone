@@ -228,7 +228,6 @@ def find_direction(path):
     direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
     return switch_case(direction)
 
-
 def switch_case(direction):
     switcher = {
         (0, -1): "LEFT",

@@ -294,6 +294,7 @@ class Blinky(Ghost): # blinky (red) use A_star search
     def getDirection(self, tile_map, pacman, ghost_list): 
         target = (0, 0)
         if (self.state == "SCATTER" or self.state == "SCARED"):
+            self.path_found = []
             return super().getRandomDirection(tile_map)
         elif (self.state == "DEAD"):
             target = (19, 15) #return to ghost house
@@ -304,13 +305,9 @@ class Blinky(Ghost): # blinky (red) use A_star search
         path = Pfinder.a_star(tile_map, (self.y, self.x), target,  expanded, ghost_list) 
         if (path is None or len(path) <= 1):
             return self.direction # keep moving forward if no path is found
-        
-        direction = Pfinder.find_direction(path)
 
-        if (not self.state == "SCARED"):
-            return direction
-        else: 
-            return super().getRandomDirection(tile_map)
+        direction = Pfinder.find_direction(path)
+        return direction
 
 class Inky(Ghost): # inky (blue) use BFS search
     def __init__(self, starting_position, direction):

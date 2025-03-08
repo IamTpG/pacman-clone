@@ -70,13 +70,18 @@ start = True
 enable_intro = True
 
 # pause time
-pause_time = 4500 #milliseconds #original 4500
+pause_time = 1 #milliseconds #original 4500
 pausing = pygame.time.get_ticks() + pause_time
 
 #debug mode
-enable_debug = False #default False
-key_order = [pygame.K_d, pygame.K_e, pygame.K_b, pygame.K_u, pygame.K_g, pygame.K_m, pygame.K_o, pygame.K_d, pygame.K_e] #[debugmode]
+enable_debug = True #default False
+key_order_dm = [pygame.K_d, pygame.K_e, pygame.K_b, pygame.K_u, pygame.K_g, pygame.K_m, pygame.K_o, pygame.K_d, pygame.K_e] #[debugmode]
 debug_input_queue = []
+
+#test mode
+enable_test = False #default False
+key_order_tm = [pygame.K_t, pygame.K_e, pygame.K_s, pygame.K_t] 
+test_input_queue = []
 
 #debug
 print("Fix these pngs files bruh")
@@ -139,7 +144,7 @@ while (running):
     if (start and enable_intro):
         TMap.displayTitleCard(screen, enable_debug)
         start = False
-        intro_sfx.play()
+        #intro_sfx.play()
         last_toggle_time = 0
         show_text = True
         while (pygame.time.get_ticks() < pausing):
@@ -149,24 +154,34 @@ while (running):
                     running = False
                     break
 
+                #check for debug mode entry
                 if (event.type == pygame.KEYDOWN and not enable_debug):
                     debug_input_queue.append(event.key)
-
-                if (len(debug_input_queue) > len(key_order)):
-                    debug_input_queue.pop(0)        
-
-                if (debug_input_queue == key_order and not enable_debug):
+                if (len(debug_input_queue) > len(key_order_dm)):
+                    debug_input_queue.pop(0)       
+                if (debug_input_queue == key_order_dm and not enable_debug):
                     print("DEBUG MODE ENABLED")
                     enable_debug = True    
+
+                #check for test mode entry
+                if (event.type == pygame.KEYDOWN and not enable_test):
+                    test_input_queue.append(event.key)
+                if (len(test_input_queue) > len(key_order_tm)):
+                    test_input_queue.pop(0)
+                if (test_input_queue == key_order_tm and not enable_test):
+                    print("TEST MODE ENABLED")
+                    enable_test = True
+
             if (not running):
                 break
 
         if (enable_debug):
             screen, new_screen_width = TMap.enableDebugMode(SCREEN_WIDTH)
-            update_region = pygame.Rect(0, SCREEN_OFFSET * 7, new_screen_width + SCREEN_OFFSET, SCREEN_HEIGHT + SCREEN_OFFSET)
+            update_region = pygame.Rect(0, SCREEN_OFFSET * 7, new_screen_width + SCREEN_OFFSET * 2, SCREEN_HEIGHT + SCREEN_OFFSET)
 
         TMap.displayTitleCard(screen, enable_debug)
         tilemap.start_time = pygame.time.get_ticks()
+
     FPS = 60
     clock.tick(FPS) 
 

@@ -61,6 +61,12 @@ def enableDebugMode(screen_width):
     new_screen = pygame.display.set_mode((screen_width + SCREEN_OFFSET * 2, SCREEN_HEIGHT + SCREEN_OFFSET * 2))
     return new_screen, screen_width
 
+def enableTestMode(screen_width):
+    screen_width += 300
+    #new screen size
+    new_screen = pygame.display.set_mode((screen_width + SCREEN_OFFSET * 2, SCREEN_HEIGHT + SCREEN_OFFSET * 2))
+    return new_screen, screen_width
+
 def displayTitleCard(screen, enable_debug):
     TITLE_TEXT = GAME_FONT_LARGE.render("PA MAN", True, (255, 255, 0))
     screen.blit(TITLE_TEXT, (SCREEN_OFFSET * 18, 10))
@@ -110,7 +116,7 @@ def displayEndCard(screen, win, tile_map):
 
     time_elapsed = pygame.time.get_ticks() - tile_map.start_time
 
-    time_played = GAME_FONT.render("TIME PLAYED: " + str(time_elapsed // 1000) + "s", True, (255, 150, 0))
+    time_played = GAME_FONT.render("TIME PLAYED: " + str(time_elapsed // 1000) + " seconds", True, (255, 150, 0))
     screen.blit(time_played, (SCREEN_OFFSET * 15, SCREEN_OFFSET * 33))
 
     exit_text = GAME_FONT_SMALL.render("Press Any Key to exit.", True, (0, 150, 255))

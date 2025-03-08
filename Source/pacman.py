@@ -116,6 +116,7 @@ class Pacman:
         self.queue_time = self.MAX_QUEUE_TIME
 
         # stuff
+        self.invincible = False
         self.dead = False
         self.lives = 3 # default 3
         self.direction = direction

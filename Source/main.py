@@ -70,17 +70,17 @@ start = True
 enable_intro = True
 
 # pause time
-pause_time = 1 #milliseconds #original 4500
+pause_time = 4500 #milliseconds #original 4500
 pausing = pygame.time.get_ticks() + pause_time
 
 #debug mode
-enable_debug = True #default False
+enable_debug = False #default False
 key_order_dm = [pygame.K_d, pygame.K_e, pygame.K_b, pygame.K_u, pygame.K_g, pygame.K_m, pygame.K_o, pygame.K_d, pygame.K_e] #[debugmode]
 debug_input_queue = []
 
 #test mode
 enable_test = False #default False
-key_order_tm = [pygame.K_t, pygame.K_e, pygame.K_s, pygame.K_t] 
+key_order_tm = [pygame.K_t, pygame.K_e, pygame.K_s, pygame.K_t, pygame.K_m, pygame.K_o, pygame.K_d, pygame.K_e] #[testmode] 
 test_input_queue = []
 
 #debug
@@ -144,7 +144,7 @@ while (running):
     if (start and enable_intro):
         TMap.displayTitleCard(screen, enable_debug)
         start = False
-        #intro_sfx.play()
+        intro_sfx.play()
         last_toggle_time = 0
         show_text = True
         while (pygame.time.get_ticks() < pausing):
@@ -152,8 +152,10 @@ while (running):
             for event in pygame.event.get():
                 if (event.type == pygame.QUIT):
                     running = False
+                    quiting = True
                     break
 
+                #check for debug mode entry
                 if (event.type == pygame.KEYDOWN and not enable_debug):
                     debug_input_queue.append(event.key)
                 if (len(debug_input_queue) > len(key_order_dm)):
@@ -178,11 +180,155 @@ while (running):
             screen, new_screen_width = TMap.enableDebugMode(SCREEN_WIDTH)
             update_region = pygame.Rect(0, SCREEN_OFFSET * 7, new_screen_width + SCREEN_OFFSET * 2, SCREEN_HEIGHT + SCREEN_OFFSET)
 
+        if (enable_test):
+            screen, new_screen_width = TMap.enableTestMode(SCREEN_WIDTH)
+            TMap.displayTestScreen(screen)
+            running = False
+
         TMap.displayTitleCard(screen, enable_debug)
         tilemap.start_time = pygame.time.get_ticks()
 
     FPS = 60
     clock.tick(FPS) 
+
+#wtf is this bruh
+setup = True
+clear_map = False
+update_blinky = False
+update_clyde = False
+update_inky = False
+update_pinky = False
+dragging_mouse = False
+select_ghost = False
+selected_ghost = None
+update_region2 = pygame.Rect(0, SCREEN_OFFSET * 40, SCREEN_WIDTH * 2, SCREEN_HEIGHT + SCREEN_OFFSET * 2)
+while(enable_test):
+    if(setup):
+        setup = False
+        if(not clear_map):
+            for i in range(MAP_HEIGHT):
+                for j in range(MAP_WIDTH):
+                    if(tilemap.tilemap[i][j] < -1 and tilemap.tilemap[i][j] > -9):
+                        tilemap.tilemap[i][j] = -1
+            clear_map = True
+        blinky.x, blinky.y = 2, 34
+        clyde.x, clyde.y = 10, 34
+        inky.x, inky.y = 20, 34
+        pinky.x, pinky.y = 28, 34
+
+        gl = [blinky, clyde, inky, pinky]
+
+        for g in gl:
+            g.MAX_SCATTER_TIME = 0
+            g.scatter_time = 0
+            g.MAX_CHASE_TIME = 10000
+            g.update(tilemap.tilemap, pacman, gl)
+            g.snapDisplayToGrid()
+        
+        pacman.direction = "DOWN"
+
+    for event in pygame.event.get():
+        if (event.type == pygame.QUIT):
+            enable_test = False
+            quiting = True
+
+        if (event.type == pygame.KEYDOWN):
+            if (event.key == pygame.constants.K_ESCAPE):
+                enable_test = False
+                quiting = True
+
+            if (event.key in input_mapping and pacman.lock_turn_time == 0 and not pacman.dead and not select_ghost):
+                pacman.queue_turn = input_mapping[event.key]
+                pacman.queue_time = pacman.MAX_QUEUE_TIME
+
+            if (event.key in input_mapping and select_ghost):
+                selected_ghost.direction = input_mapping[event.key]
+                screen.fill((0, 0, 0), update_region2)
+                pygame.display.update()
+                TEXT_SELETECTED_DIRECTION = GAME_FONT.render("Selected direction: " + selected_ghost.direction, True, (255, 255, 255))
+                screen.blit(TEXT_SELETECTED_DIRECTION, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 40))
+            if (event.key == pygame.K_0):
+                select_ghost = False
+                screen.fill((0, 0, 0), update_region2)
+
+            if (event.key == pygame.K_1):
+                update_blinky = True
+                blinky.snapDisplayToGrid()
+            if (event.key == pygame.K_2):
+                update_clyde = True
+                clyde.snapDisplayToGrid()
+            if (event.key == pygame.K_3):
+                update_inky = True
+                inky.snapDisplayToGrid()
+            if (event.key == pygame.K_4):
+                update_pinky = True
+                pinky.snapDisplayToGrid()
+
+            if(event.key == pygame.K_r):
+                setup = True
+            if(event.key == pygame.K_c):
+                screen.fill((0, 0, 0), update_region)
+
+        if (event.type == pygame.MOUSEBUTTONDOWN):
+            if(event.button == 1):
+                dragging_mouse = True
+            if(event.button == 3):
+                select_ghost = True
+                for ghost in gl:
+                    if(abs(ghost.display_x - event.pos[0]) < TILE_SIZE * 3 and abs(ghost.display_y - event.pos[1]) < TILE_SIZE * 3):
+                        ghost.x, ghost.y = event.pos[0] // TILE_SIZE, event.pos[1] // TILE_SIZE
+                        selected_ghost = ghost
+                SELECTED_GHOST_TEXT = GAME_FONT.render("Selected ghost: " + selected_ghost.name, True, (255, 255, 255))
+                screen.blit(SELECTED_GHOST_TEXT, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 40))
+        if (event.type == pygame.MOUSEBUTTONUP):
+            dragging_mouse = False
+            screen.fill((0, 0, 0), update_region)
+
+        if(event.type == pygame.MOUSEMOTION and dragging_mouse):
+            for ghost in gl:
+                if(abs(ghost.display_x - event.pos[0]) < TILE_SIZE * 2 and abs(ghost.display_y - event.pos[1]) < TILE_SIZE * 2):
+                    ghost.x, ghost.y = event.pos[0] // TILE_SIZE, event.pos[1] // TILE_SIZE
+                    ghost.snapDisplayToGrid()
+                    pygame.display.update(update_region)
+
+    # update pacman
+    pacman.update(tilemap.tilemap)
+
+    if(pacman.checkObstructionDirection(tilemap.tilemap, pacman.direction) == False):
+        screen.fill((0, 0, 0), update_region)
+
+    if(update_blinky):
+        blinky.update(tilemap.tilemap, pacman, gl)
+        if(blinky.x == pacman.x and blinky.y == pacman.y):
+            update_blinky = False
+
+    if(update_clyde):
+        clyde.update(tilemap.tilemap, pacman, gl)
+        if(clyde.x == pacman.x and clyde.y == pacman.y):
+            update_clyde = False
+        
+    if(update_inky):
+        inky.update(tilemap.tilemap, pacman, gl)
+        if(inky.x == pacman.x and inky.y == pacman.y):
+            update_inky = False
+
+    if(update_pinky):
+        pinky.update(tilemap.tilemap, pacman, gl)
+        if(pinky.x == pacman.x and pinky.y == pacman.y):
+            update_pinky = False
+
+    # render objects
+    tilemap.render(screen)
+    pacman.render(screen, tilemap)
+    blinky.render(screen)
+    clyde.render(screen)
+    inky.render(screen)
+    pinky.render(screen)
+
+    pygame.display.update()
+
+    FPS = 60
+    clock.tick(FPS)
 
 # display endcard
 if(not quiting):

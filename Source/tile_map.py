@@ -62,7 +62,7 @@ def enableDebugMode(screen_width):
     return new_screen, screen_width
 
 def enableTestMode(screen_width):
-    screen_width += 300
+    screen_width += 500
     #new screen size
     new_screen = pygame.display.set_mode((screen_width + SCREEN_OFFSET * 2, SCREEN_HEIGHT + SCREEN_OFFSET * 2))
     return new_screen, screen_width
@@ -168,6 +168,51 @@ def displayDebugInfo(screen, pacman, ghosts_list):
         if ghosts_list[i].state == "SCARED":
             GHOST_TIMER_TEXT = GAME_FONT_SMALL.render(str(ghosts_list[i].scared_time), True, (255, 255, 255))
             screen.blit(GHOST_TIMER_TEXT, (SCREEN_OFFSET * 72, SCREEN_OFFSET * (12.8 + i * 2)))
+
+def displayTestScreen(screen):
+    TEST_TEXT = GAME_FONT_LARGE.render("... TEST MODE ...", True, (0, 255, 255))
+    screen.blit(TEST_TEXT, (SCREEN_OFFSET * 53.5, SCREEN_OFFSET * 2.6))
+
+    dc1 = "Welcome to the test screen!"
+    dc2 = "This screen is used to show the pathfinding of the ghosts"
+
+    dc3 = "Pacman is allowed to move freely using the arrow keys"
+    dc4 = "The ghosts are will always chase Pacman"
+    dc5 = "A ghost will automatically stop when it reaches pacman"
+
+    dc6 = "Press (1-4) to make the ghosts move."
+    dc7 = "Press (r) to reset the ghosts to their original position"
+    dc8 = "Press (c)(Or move Pacman) to refresh screen"
+    dc9 = "Drag the ghosts with LMB to move them"
+    dc10 = "Press RMB on a ghost to select"
+    dc11 = "Press the Arrow keys to change direciton"
+    dc12 = "Press (0) to stop selection"
+
+    dc1_text = GAME_FONT_SMALL.render(dc1, True, (255, 255, 255))
+    dc2_text = GAME_FONT_SMALL.render(dc2, True, (255, 255, 255))
+    dc3_text = GAME_FONT_SMALL.render(dc3, True, (255, 255, 255))
+    dc4_text = GAME_FONT_SMALL.render(dc4, True, (255, 255, 255))
+    dc5_text = GAME_FONT_SMALL.render(dc5, True, (255, 255, 255))
+    dc6_text = GAME_FONT_SMALL.render(dc6, True, (255, 255, 255))
+    dc7_text = GAME_FONT_SMALL.render(dc7, True, (255, 255, 255))
+    dc8_text = GAME_FONT_SMALL.render(dc8, True, (255, 255, 255))
+    dc9_text = GAME_FONT_SMALL.render(dc9, True, (255, 255, 255))
+    dc10_text = GAME_FONT_SMALL.render(dc10, True, (255, 255, 255))
+    dc11_text = GAME_FONT_SMALL.render(dc11, True, (255, 255, 255))
+    dc12_text = GAME_FONT_SMALL.render(dc12, True, (255, 255, 255))
+
+    screen.blit(dc1_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 8))
+    screen.blit(dc2_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 10))
+    screen.blit(dc3_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 14))
+    screen.blit(dc4_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 16))
+    screen.blit(dc5_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 18))
+    screen.blit(dc6_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 22))
+    screen.blit(dc7_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 24))
+    screen.blit(dc8_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 26))
+    screen.blit(dc9_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 28))
+    screen.blit(dc10_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 30))
+    screen.blit(dc11_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 32))
+    screen.blit(dc12_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 34))
 
 def displayGameInfo(screen, pacman, tile_map):
     #display pacman lives

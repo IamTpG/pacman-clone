@@ -372,44 +372,18 @@ class Pinky(Ghost): # pinky (pink) use DFS search
         else:
             target = (pacman.y, pacman.x)
 
-        visited = set()
-        expanded_list = [(self.y,self.x)] #expanded is a list,  i didnt quite understand the meaning of this list yet - Neidy 
-        path = Pfinder.dfs_recursive_ordered(tile_map,(self.y,self.x),visited, target,  expanded_list, ghost_list)   
+        expanded_list = [(self.y, self.x)]
+        path = Pfinder.ids(tile_map,(self.y,self.x),target, expanded_list, ghost_list)   
         if path is None :
             direction = (0,0)
             return self.direction #keep moving in the same direction if no path is found
         direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
-        #ghost not able to turn 180 degrees
-        if(Pfinder.switch_case(direction) == (opposite_direction[self.direction])):
-            if(Pfinder.switch_case(direction) == "UP" or Pfinder.switch_case(direction) == "DOWN"):
-                #go left
-                expanded_list = [(self.y,self.x-1)]
-                path = Pfinder.dfs_recursive_ordered(tile_map,(self.y,self.x - 1),visited, (pacman.y,pacman.x),  expanded_list, ghost_list)
-                if path is None:
-                    #go right
-                    expanded_list = [(self.y,self.x+1)]
-                    path = Pfinder.dfs_recursive_ordered(tile_map,(self.y,self.x + 1),visited, (pacman.y,pacman.x),  expanded_list, ghost_list)
-                    if path is None:
-                        return self.direction
-                    return "RIGHT"
-                return "LEFT"
-            else:
-                #go up
-                expanded_list = [(self.y-1,self.x)]
-                path = Pfinder.dfs_recursive_ordered(tile_map,(self.y - 1,self.x),visited, (pacman.y,pacman.x),  expanded_list, ghost_list)
-                if path is None:
-                    #go down
-                    expanded_list = [(self.y+1,self.x)]
-                    path = Pfinder.dfs_recursive_ordered(tile_map,(self.y + 1,self.x),visited, (pacman.y,pacman.x),  expanded_list, ghost_list)
-                    if path is None:
-                        return self.direction
-                    return "DOWN"
-                return "UP"
+        
         if(not self.state == "SCARED"):
             print (Pfinder.switch_case(direction))  
             return Pfinder.switch_case(direction) 
         expanded_list = [(self.y, self.x)] # expanded is a list, i didnt quite understand the meaning of this list yet - Neidy 
-        path = Pfinder.dfs_recursive_ordered(tile_map, (self.y, self.x), visited, (pacman.y, pacman.x), expanded_list, ghost_list)   
+        path = Pfinder.ids(tile_map,(self.y,self.x),target, expanded_list, ghost_list)   
         
         if (path is None or len(path) <= 1):
             return self.direction # keep moving forward if no path is found

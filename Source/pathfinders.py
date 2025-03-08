@@ -1,8 +1,8 @@
 if __name__ == '__main__':
     print("This is a module. Not meant to be run standalone.")
-    exit()
 
 import heapq
+import random
 from collections import deque
 
 def bfs(grid, start, goal, expanded, ghost_list):
@@ -122,6 +122,7 @@ def ucs(grid, start, goal, expanded, ghost_list):
     path.reverse()
     return path
 
+
 def dfs_recursive_ordered(grid, start, visited, goal,expanded_list, ghost_list):
     rows, cols = len(grid), len(grid[0])
     
@@ -149,12 +150,38 @@ def dfs_recursive_ordered(grid, start, visited, goal,expanded_list, ghost_list):
                     return [(start[0], start[1])] + result
     return None
 
-
 def heuristic(a, b):
     # Manhattan distance as a heuristic (suitable for 4-directional movement)
     return abs(a[0] - b[0]) + abs(a[1] - b[1]) # Manhattan = |dx| + |dy|
 
+def dfs_limited(grid, start, goal, depth, limit, visited, expanded_list):
+    rows, cols = len(grid), len(grid[0])
+    if start == goal:  # if goal
+        return [(start[0],start[1])]
+    if depth >= limit:  # reach limit
+        return None
+    
+    visited.add(start)  
+    
+    # up, down, left, right 
+    for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+        ni, nj = start[0] + di, start[1] + dj # consider this neighbor
+        if (1 <= ni <= len(grid) and 1 <= nj <= len(grid[0]) and grid[ni][nj] <=-1): # valid index and not wall
+            if ((ni, nj)) not in visited: 
+                expanded_list.append(start)
+                result = dfs_limited(grid, (ni,nj),goal, depth + 1, limit, visited,expanded_list)
+                if result is not None: 
+                    return [(start[0], start[1])] + result
+    return None
 
+def ids(grid, start, goal,expanded_list, ghost_list):
+    depth_limit = 0
+    while True:  #depth increase until find the goal
+        visited = set()
+        path = dfs_limited(grid, start, goal, 0, depth_limit, visited,expanded_list)
+        if(path is not None):
+            return path
+        depth_limit += 1  #increase depth
 def a_star(grid, start, goal, expanded, ghost_list):
     #initialize variable
     rows, cols = len(grid), len(grid[0])

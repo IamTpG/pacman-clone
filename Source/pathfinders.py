@@ -123,32 +123,6 @@ def ucs(grid, start, goal, expanded, ghost_list):
     return path
 
 
-def dfs_recursive_ordered(grid, start, visited, goal,expanded_list, ghost_list):
-    rows, cols = len(grid), len(grid[0])
-    
-    # Check boundaries and if already visited
-    if not (1 <= start[0] <= rows and 1 <= start[1] <= cols ) or (start[0], start[1]) in visited:
-        return None
-    visited.add((start[0], start[1]))
-    # if current = finish
-    if start == goal:
-        
-        return [(start[0],start[1])]
-    
-   
-    directions = [(1, 0),(0, 1), (-1, 0), (0, -1) ]
-    # for neighbors of current
-    for di, dj in directions:
-        ni = di + start[0]
-        nj = dj + start[1]
-        if 1 <= nj <= cols and 1 <= ni <= rows and grid[ni][nj] <= -1:
-           
-            if ((ni,nj)) not in visited:
-                expanded_list.append((ni,nj))
-                result = dfs_recursive_ordered(grid, (ni, nj), visited, (goal[0],goal[1]),expanded_list,ghost_list)
-                if result is not None: 
-                    return [(start[0], start[1])] + result
-    return None
 
 def heuristic(a, b):
     # Manhattan distance as a heuristic (suitable for 4-directional movement)
@@ -174,13 +148,59 @@ def dfs_limited(grid, start, goal, depth, limit, visited, expanded_list, directi
                 if result is not None: 
                     return [(start[0], start[1])] + result
     return None
+def dfs_limited_stack(grid, start, goal, limit, visited, expanded_list, direction_vector): 
 
+    rows, cols = len(grid), len(grid[0])        
+    trace = [[(-1, -1) for i in range(0, cols + 1)] for j in range(0, rows + 1)]
+    depth = [[0 for i in range(0, cols + 1)] for j in range(0, rows + 1)]
+    prev_vector = [[(0, 0) for i in range(0, cols + 1)] for j in range(0, rows + 1)]
+    
+    prev_vector[start[0]][start[1]] = direction_vector
+    depth[start[0]][start[1]] = 0
+    found = False
+    visited.add(start)  
+    stack = [start]
+   
+
+    while stack and (not found):
+        current = stack.pop()
+        if current == goal:
+            found = True
+            break
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        old_direction = prev_vector[current[0]][current[1]]
+        directions.remove((-old_direction[0], -old_direction[1]))
+        expanded_list.append(current)
+        for di, dj in directions:
+            neighbor = (current[0] + di, current[1] + dj)
+            if 1 <= neighbor[0] <= rows and 1 <= neighbor[1] <= cols and grid[neighbor[0]][neighbor[1]] <= -1 and neighbor not in visited:
+                visited.add(neighbor)
+                depth[neighbor[0]][neighbor[1]] = depth[current[0]][current[1]] + 1
+                if(depth[neighbor[0]][neighbor[1]] >= limit):
+                    return None
+                trace[neighbor[0]][neighbor[1]] = current
+                prev_vector[neighbor[0]][neighbor[1]] = (di, dj)
+                stack.append(neighbor)
+    
+    if (found == False):
+        return None
+    
+    # tracing back the path
+    u = goal
+    path = [goal]
+    while (u != start):
+        u = trace[u[0]][u[1]]
+        path.append(u)
+
+    path.reverse()
+    return path
 def ids(grid, start, goal,expanded_list, ghost_list, self_direction):
     depth_limit = 0
     direciton_vector = direction_to_vector(self_direction) 
     while depth_limit < MAX_DEPTH:  # Giới hạn độ sâu để tránh chạy vô tận
         visited = set()
-        result =  dfs_limited(grid, start, goal, 0, depth_limit, visited, expanded_list, direciton_vector)
+        result = dfs_limited(grid, start, goal, 0, depth_limit, visited, expanded_list, direciton_vector)
+        
         if result is not None:
             return result  # Tìm thấy đường đi
         depth_limit += 1

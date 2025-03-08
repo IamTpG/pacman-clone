@@ -199,7 +199,8 @@ def ids(grid, start, goal,expanded_list, ghost_list, self_direction):
     direciton_vector = direction_to_vector(self_direction) 
     while depth_limit < MAX_DEPTH:  # Giới hạn độ sâu để tránh chạy vô tận
         visited = set()
-        result =  dfs_limited_stack(grid, start, goal, depth_limit, visited, expanded_list, direciton_vector)
+        result = dfs_limited(grid, start, goal, 0, depth_limit, visited, expanded_list, direciton_vector)
+        
         if result is not None:
             return result  # Tìm thấy đường đi
         depth_limit += 1

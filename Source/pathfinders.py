@@ -154,11 +154,10 @@ def dfs_limited_stack(grid, start, goal, limit, visited, expanded_list, directio
     trace = [[(-1, -1) for i in range(0, cols + 1)] for j in range(0, rows + 1)]
     depth = [[0 for i in range(0, cols + 1)] for j in range(0, rows + 1)]
     prev_vector = [[(0, 0) for i in range(0, cols + 1)] for j in range(0, rows + 1)]
-    prev_vector[start[0]][start[1]] = direction_vector
-    depth[start[0]][start[1]] = 1
-    found = False
-
     
+    prev_vector[start[0]][start[1]] = direction_vector
+    depth[start[0]][start[1]] = 0
+    found = False
     visited.add(start)  
     stack = [start]
    

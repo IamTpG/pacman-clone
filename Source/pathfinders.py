@@ -4,7 +4,7 @@ if __name__ == '__main__':
 import heapq
 import random
 from collections import deque
-
+MAX_DEPTH = 1000  # Giới hạn độ sâu tối đa 
 def bfs(grid, start, goal, expanded, ghost_list):
     #initialize variable
     rows, cols = len(grid), len(grid[0])
@@ -154,7 +154,7 @@ def heuristic(a, b):
     # Manhattan distance as a heuristic (suitable for 4-directional movement)
     return abs(a[0] - b[0]) + abs(a[1] - b[1]) # Manhattan = |dx| + |dy|
 
-def dfs_limited(grid, start, goal, depth, limit, visited, expanded_list):
+def dfs_limited(grid, start, goal, depth, limit, visited, expanded_list, direction_vector): 
     rows, cols = len(grid), len(grid[0])
     if start == goal:  # if goal
         return [(start[0],start[1])]
@@ -162,26 +162,29 @@ def dfs_limited(grid, start, goal, depth, limit, visited, expanded_list):
         return None
     
     visited.add(start)  
-    
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    directions.remove((-direction_vector[0], -direction_vector[1]))
     # up, down, left, right 
-    for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+    for di, dj in directions:
         ni, nj = start[0] + di, start[1] + dj # consider this neighbor
         if (1 <= ni <= len(grid) and 1 <= nj <= len(grid[0]) and grid[ni][nj] <=-1): # valid index and not wall
             if ((ni, nj)) not in visited: 
                 expanded_list.append(start)
-                result = dfs_limited(grid, (ni,nj),goal, depth + 1, limit, visited,expanded_list)
+                result = dfs_limited(grid, (ni,nj),goal, depth + 1, limit, visited,expanded_list, (di,dj))
                 if result is not None: 
                     return [(start[0], start[1])] + result
     return None
 
-def ids(grid, start, goal,expanded_list, ghost_list):
+def ids(grid, start, goal,expanded_list, ghost_list, self_direction):
     depth_limit = 0
-    while True:  #depth increase until find the goal
+    direciton_vector = direction_to_vector(self_direction) 
+    while depth_limit < MAX_DEPTH:  # Giới hạn độ sâu để tránh chạy vô tận
         visited = set()
-        path = dfs_limited(grid, start, goal, 0, depth_limit, visited,expanded_list)
-        if(path is not None):
-            return path
-        depth_limit += 1  #increase depth
+        result =  dfs_limited(grid, start, goal, 0, depth_limit, visited, expanded_list, direciton_vector)
+        if result is not None:
+            return result  # Tìm thấy đường đi
+        depth_limit += 1
+    return None  # Không tìm thấy đường đi trong giới hạn
 def a_star(grid, start, goal, expanded, ghost_list):
     #initialize variable
     rows, cols = len(grid), len(grid[0])
@@ -235,6 +238,15 @@ def switch_case(direction):
         (0, 1):  "RIGHT",
         (-1, 0): "UP",
         (1, 0):  "DOWN",
+    }
+
+    return switcher.get(direction, "Invalid")  # Default case 
+def direction_to_vector(direction):
+    switcher = {
+        "LEFT":(0, -1),
+        "RIGHT":(0, 1),
+        "UP":(-1, 0),
+        "DOWN":(1, 0)
     }
 
     return switcher.get(direction, "Invalid")  # Default case 

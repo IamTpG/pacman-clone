@@ -373,7 +373,7 @@ class Pinky(Ghost): # pinky (pink) use DFS search
             target = (pacman.y, pacman.x)
 
         expanded_list = [(self.y, self.x)]
-        path = Pfinder.ids(tile_map,(self.y,self.x),target, expanded_list, ghost_list)   
+        path = Pfinder.ids(tile_map,(self.y,self.x),target, expanded_list, ghost_list, self.direction)   
         if path is None :
             direction = (0,0)
             return self.direction #keep moving in the same direction if no path is found
@@ -383,7 +383,7 @@ class Pinky(Ghost): # pinky (pink) use DFS search
             print (Pfinder.switch_case(direction))  
             return Pfinder.switch_case(direction) 
         expanded_list = [(self.y, self.x)] # expanded is a list, i didnt quite understand the meaning of this list yet - Neidy 
-        path = Pfinder.ids(tile_map,(self.y,self.x),target, expanded_list, ghost_list)   
+        path = Pfinder.ids(tile_map,(self.y,self.x),target, expanded_list, ghost_list, self.direction)   
         
         if (path is None or len(path) <= 1):
             return self.direction # keep moving forward if no path is found

@@ -180,13 +180,13 @@ def displayTestScreen(screen):
     dc4 = "The ghosts will always chase Pacman"
     dc5 = "A ghost will automatically stop when it reaches pacman"
 
-    dc6 = "Press (1-4) to make the ghosts move."
+    dc6 = "Press Number (1-4) to make the ghosts move."
     dc7 = "Press (r) to reset the ghosts to their original position"
-    dc8 = "Press (c)(Or move Pacman) to refresh screen"
+    dc8 = "Press (c OR move Pacman) to refresh screen"
     dc9 = "Drag the ghosts with LMB to move them"
     dc10 = "Press RMB on a ghost to select"
     dc11 = "Press the Arrow keys to change direciton"
-    dc12 = "Press (0) to stop selection"
+    dc12 = "Press Number (0) to stop selection"
 
     dc1_text = GAME_FONT_SMALL.render(dc1, True, (255, 255, 255))
     dc2_text = GAME_FONT_SMALL.render(dc2, True, (255, 255, 255))

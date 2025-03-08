@@ -154,7 +154,6 @@ while (running):
                     running = False
                     break
 
-                #check for debug mode entry
                 if (event.type == pygame.KEYDOWN and not enable_debug):
                     debug_input_queue.append(event.key)
                 if (len(debug_input_queue) > len(key_order_dm)):

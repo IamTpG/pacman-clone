@@ -43,10 +43,10 @@ quiting = False
 
 # initialize objects
 pacman_starting_position = (15, 28)
-blinky_starting_position = (15, 16)
+blinky_starting_position = (17, 19)
 clyde_starting_position  = (15, 19)
 inky_starting_position   = (13, 19)
-pinky_starting_position  = (17, 19)
+pinky_starting_position  = (17, 16)
 
 starting_positions = [pacman_starting_position, blinky_starting_position, clyde_starting_position, inky_starting_position, pinky_starting_position]
 

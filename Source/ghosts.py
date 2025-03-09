@@ -4,11 +4,10 @@ if __name__ == '__main__':
 
 import pygame
 import random
-import queue
 
 # local
 import tile_map as TMap
-import pathfinders as Pfinder  
+import pathfinders as Pfinder 
 
 # map constants
 TILE_RESU = TMap.TILE_RESU
@@ -287,8 +286,8 @@ class Ghost:
             pass # display nothing
         else:
             screen.blit(self.frames[direction_mapping[self.direction]], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
-        
-class Blinky(Ghost): # blinky (red) use A_star search
+
+class Blinky(Ghost): # blinky (red) uses A* search
     def __init__(self, starting_position, direction):
         super().__init__(starting_position, direction, "blinky")
 
@@ -298,19 +297,21 @@ class Blinky(Ghost): # blinky (red) use A_star search
             self.path_found = []
             return super().getRandomDirection(tile_map)
         elif (self.state == "DEAD"):
-            target = (19, 15) #return to ghost house
+            target = (19, 15) # return to ghost house
         else:
             target = (pacman.y, pacman.x)
 
         expanded = set()
-        path = Pfinder.a_star(tile_map, (self.y, self.x), target,  expanded, ghost_list) 
-        if (path is None or len(path) <= 1):
-            return self.direction # keep moving forward if no path is found
+        path = Pfinder.aStar(tile_map, (self.y, self.x), target, expanded, ghost_list) 
 
-        direction = Pfinder.find_direction(path)
+        if (path is None or len(path) <= 1):
+            # keep moving foward if no path was found
+            return self.direction
+        
+        direction = Pfinder.identifyDirection(path)
         return direction
 
-class Inky(Ghost): # inky (blue) use BFS search
+class Inky(Ghost): # Inky (blue) uses BFS search
     def __init__(self, starting_position, direction):
         super().__init__(starting_position, direction, "inky")
     
@@ -320,20 +321,22 @@ class Inky(Ghost): # inky (blue) use BFS search
         if (self.state == "SCATTER" or self.state == "SCARED"):
             return super().getRandomDirection(tile_map)
         elif (self.state == "DEAD"):
-            target = (19, 15) #return to ghost house
+            target = (19, 15) # return to ghost house
         else:
             target = (pacman.y, pacman.x)
 
+        # expanded is used for analysis
         expanded = set()
         path = Pfinder.bfs(tile_map, (self.y, self.x), target, expanded, ghost_list) 
+
         if (path is None or len(path) <= 1):
-            direction = (0, 0)
-            return self.direction # keep moving forward if no path is found
+            # keep moving foward if no path was found
+            return self.direction
         
-        direction = Pfinder.find_direction(path)
+        direction = Pfinder.identifyDirection(path)
         return direction
 
-class Clyde(Ghost): # clyde (orange) use UCS search
+class Clyde(Ghost): # Clyde (orange) uses UCS search
     def __init__(self, starting_position, direction):
         super().__init__(starting_position, direction, "clyde")
     
@@ -343,50 +346,43 @@ class Clyde(Ghost): # clyde (orange) use UCS search
         if (self.state == "SCATTER" or self.state == "SCARED"):
             return super().getRandomDirection(tile_map)
         elif (self.state == "DEAD"):
-            target = (19, 15) #return to ghost house
+            target = (19, 15) # return to ghost house
         else:
             target = (pacman.y, pacman.x)
 
+        # expanded is used for analysis
         expanded = set()
         path = Pfinder.ucs(tile_map, (self.y, self.x), target, expanded, ghost_list) 
+
         if (path is None or len(path) <= 1):
-            return self.direction # keep moving forward if no path is found
+            # keep moving foward if no path was found
+            return self.direction
         
-        direction = Pfinder.find_direction(path)
+        direction = Pfinder.identifyDirection(path)
         return direction
     
-class Pinky(Ghost): # pinky (pink) use DFS search
+class Pinky(Ghost): # Pinky (pink) uses IDS search
     def __init__(self, starting_position, direction):
         super().__init__(starting_position, direction, "pinky")
     
-    #override with specific behavior
+    # override with specific behavior
     def getDirection(self, tile_map, pacman, ghost_list):  
         target = (0, 0)
 
-        if (self.state == "SCATTER" or self.state == "SCARED"):
+        if ((self.y, self.x) in Pfinder.HOUSE or self.state == "SCATTER" or self.state == "SCARED"):
             return super().getRandomDirection(tile_map)
         elif (self.state == "DEAD"):
-            target = (19, 15) #return to ghost house
+            target = (19, 15) # return to ghost house
         else:
             target = (pacman.y, pacman.x)
 
+        # expanded is used for analysis
         expanded = set()
-        path = Pfinder.ids(tile_map,(self.y,self.x),target, expanded, ghost_list, self.direction )   
-        
-        if path is None :
-            direction = (0,0)
-            return self.direction #keep moving in the same direction if no path is found
-        direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
-        
-        if(not self.state == "SCARED"):
-            
-            return Pfinder.switch_case(direction) 
-        expanded_list = [(self.y, self.x)] # expanded is a list, i didnt quite understand the meaning of this list yet - Neidy 
-        path = Pfinder.ids(tile_map,(self.y,self.x),target, expanded_list, ghost_list, self.direction)    
-        
-        if (path is None or len(path) <= 1):
-            return self.direction # keep moving forward if no path is found
+        path = Pfinder.ids(tile_map, (self.y, self.x), target, expanded, ghost_list)   
 
-        direction = Pfinder.find_direction(path)
+        if (path is None or len(path) <= 1):
+            # keep moving foward if no path was found
+            return self.direction
+        
+        direction = Pfinder.identifyDirection(path)
         return direction
-            

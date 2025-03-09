@@ -56,7 +56,7 @@ clyde   = ghosts.Clyde(clyde_starting_position, "UP")
 inky    = ghosts.Inky(inky_starting_position, "UP")
 pinky   = ghosts.Pinky(pinky_starting_position, "UP")
 
-ghosts_list = [blinky, clyde, inky, pinky]
+ghosts_list = [blinky, inky, pinky, clyde]
 
 # load map
 tilemap = TMap.Tilemap("Resource\\map\\map.png")
@@ -191,47 +191,34 @@ while (running):
     FPS = 60
     clock.tick(FPS) 
 
-#wtf is this bruh
+# test mode
+next_direction = {
+    "UP": "RIGHT",
+    "RIGHT": "DOWN",
+    "DOWN": "LEFT",
+    "LEFT": "UP"
+}
+
+# setup variables
 setup = True
 clear_map = False
-update_blinky = False
-update_clyde = False
-update_inky = False
-update_pinky = False
+update_blinky, update_clyde, update_inky, update_pinky = False, False, False, False
+update_ghosts = [update_blinky, update_inky, update_pinky, update_clyde]
 dragging_mouse = False
+
+# selection variables
 select_ghost = False
 selected_ghost = None
-update_region2 = pygame.Rect(0, SCREEN_OFFSET * 40, SCREEN_WIDTH * 2, SCREEN_HEIGHT + SCREEN_OFFSET * 2)
+
+# update region
+update_region2 = pygame.Rect(SCREEN_OFFSET * 50, SCREEN_OFFSET * 40, SCREEN_WIDTH, SCREEN_HEIGHT)
+last_sprite_position = (0, 0, 0, 0)
+
+# test mode loop
 while(enable_test):
     if(setup):
+        clear_map, update_ghosts = TMap.setupTestScreen(screen, pacman, ghosts_list, tilemap, clear_map, update_ghosts, update_region)
         setup = False
-        if(not clear_map):
-            for i in range(MAP_HEIGHT):
-                for j in range(MAP_WIDTH):
-                    if(tilemap.tilemap[i][j] < -1 and tilemap.tilemap[i][j] > -9):
-                        tilemap.tilemap[i][j] = -1
-            clear_map = True
-        blinky.x, blinky.y = 2, 34
-        clyde.x, clyde.y = 10, 34
-        inky.x, inky.y = 20, 34
-        pinky.x, pinky.y = 28, 34
-
-        gl = [blinky, clyde, inky, pinky]
-
-        update_blinky = False
-        update_clyde = False
-        update_inky = False
-        update_pinky = False
-
-        for g in gl:
-            g.MAX_SCATTER_TIME = 0
-            g.scatter_time = 0
-            g.MAX_CHASE_TIME = 10000
-            g.update(tilemap.tilemap, pacman, gl)
-            g.snapDisplayToGrid()
-        
-        screen.fill((0, 0, 0), update_region)
-        pygame.display.update()
 
     for event in pygame.event.get():
         if (event.type == pygame.QUIT):
@@ -246,28 +233,18 @@ while(enable_test):
             if (event.key in input_mapping and pacman.lock_turn_time == 0 and not pacman.dead and not select_ghost):
                 pacman.queue_turn = input_mapping[event.key]
                 pacman.queue_time = pacman.MAX_QUEUE_TIME
-
-            if (event.key in input_mapping and select_ghost):
-                selected_ghost.direction = input_mapping[event.key]
-                screen.fill((0, 0, 0), update_region2)
-                pygame.display.update()
-                TEXT_SELETECTED_DIRECTION = GAME_FONT.render("Selected direction: " + selected_ghost.direction, True, (255, 255, 255))
-                screen.blit(TEXT_SELETECTED_DIRECTION, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 40))
-            if (event.key == pygame.K_0):
-                select_ghost = False
-                screen.fill((0, 0, 0), update_region2)
-
+           
             if (event.key == pygame.K_1):
-                update_blinky = True
+                update_ghosts[0] = True #blinky
                 blinky.snapDisplayToGrid()
             if (event.key == pygame.K_2):
-                update_clyde = True
+                update_ghosts[1] = True #inky
                 clyde.snapDisplayToGrid()
             if (event.key == pygame.K_3):
-                update_inky = True
+                update_ghosts[2] = True #pinky
                 inky.snapDisplayToGrid()
             if (event.key == pygame.K_4):
-                update_pinky = True
+                update_ghosts[3] = True #clyde
                 pinky.snapDisplayToGrid()
 
             if(event.key == pygame.K_r):
@@ -278,61 +255,77 @@ while(enable_test):
         if (event.type == pygame.MOUSEBUTTONDOWN):
             if(event.button == 1):
                 dragging_mouse = True
-            if(event.button == 3):
-                select_ghost = True
-                for ghost in gl:
+                for ghost in ghosts_list:
                     if(abs(ghost.display_x - event.pos[0]) < TILE_SIZE * 2 and abs(ghost.display_y - event.pos[1]) < TILE_SIZE * 2):
-                        ghost.x, ghost.y = event.pos[0] // TILE_SIZE, event.pos[1] // TILE_SIZE
                         selected_ghost = ghost
-                SELECTED_GHOST_TEXT = GAME_FONT.render("Selected ghost: " + selected_ghost.name, True, (255, 255, 255))
-                screen.blit(SELECTED_GHOST_TEXT, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 40))
+                        select_ghost = True
+            if(event.button == 3):
+                if(select_ghost):
+                    select_ghost = False
+                    screen.fill((0, 0, 0), update_region2)
+                else:
+                    if(selected_ghost == None):
+                        for ghost in ghosts_list:
+                            if(abs(ghost.display_x - event.pos[0]) < TILE_SIZE * 2 and abs(ghost.display_y - event.pos[1]) < TILE_SIZE * 2):
+                                selected_ghost = ghost
+                                select_ghost = True
+                    
         if (event.type == pygame.MOUSEBUTTONUP):
+            if(select_ghost or abs(pacman.display_x - event.pos[0]) < TILE_SIZE * 2 and abs(pacman.display_y - event.pos[1]) < TILE_SIZE * 2):
+                screen.fill((0, 0, 0), update_region)
+            if(event.button == 3 and selected_ghost != None):
+                selected_ghost.direction = next_direction[selected_ghost.direction]
+                screen.fill((0, 0, 0), update_region2)
+                SELECTED_GHOST_TEXT = GAME_FONT.render("Selected: " + selected_ghost.name + " | Direction: " + selected_ghost.direction, True, (255, 255, 0))
+                screen.blit(SELECTED_GHOST_TEXT, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 40))
+            selected_ghost = None
             dragging_mouse = False
-            screen.fill((0, 0, 0), update_region)
+            select_ghost = False
 
         if(event.type == pygame.MOUSEMOTION and dragging_mouse):
-            if(abs(pacman.display_x - event.pos[0]) < TILE_SIZE * 2 and abs(pacman.display_y - event.pos[1]) < TILE_SIZE * 2):
-                pacman.direction = "NONE"
+            if(select_ghost):
+                last_sprite_position = (selected_ghost.x * TILE_SIZE - selected_ghost.radius, selected_ghost.y * TILE_SIZE - selected_ghost.radius, TILE_SIZE * 2, TILE_SIZE * 2)
+                selected_ghost.x, selected_ghost.y = event.pos[0] // TILE_SIZE, event.pos[1] // TILE_SIZE
+                selected_ghost.snapDisplayToGrid()
+                pygame.display.update(update_region)
+            elif (abs(pacman.display_x - event.pos[0]) < TILE_SIZE * 2 and abs(pacman.display_y - event.pos[1]) < TILE_SIZE * 2):
+                last_sprite_position = (pacman.x * TILE_SIZE - pacman.radius, pacman.y * TILE_SIZE - pacman.radius, TILE_SIZE * 2, TILE_SIZE * 2)
                 pacman.x, pacman.y = event.pos[0] // TILE_SIZE, event.pos[1] // TILE_SIZE
                 pacman.snapDisplayToGrid()
                 pygame.display.update(update_region)
-            for ghost in gl:
-                if(abs(ghost.display_x - event.pos[0]) < TILE_SIZE * 2 and abs(ghost.display_y - event.pos[1]) < TILE_SIZE * 2):
-                    ghost.x, ghost.y = event.pos[0] // TILE_SIZE, event.pos[1] // TILE_SIZE
-                    ghost.snapDisplayToGrid()
-                    pygame.display.update(update_region)
+            screen.fill((0, 0, 0), last_sprite_position)
 
     # update pacman
     pacman.update(tilemap.tilemap)
-
     if(pacman.checkObstructionDirection(tilemap.tilemap, pacman.direction)):
         pacman.direction = "NONE"
+        screen.fill((0, 0, 0), update_region)
     if(pacman.direction != "NONE"):
         screen.fill((0, 0, 0), update_region)
 
-    if(update_blinky):
+    # update ghosts
+    if(update_ghosts[0]): #blinky
         if(blinky.x == pacman.x and blinky.y == pacman.y):
-            update_blinky = False
+            update_ghosts[0] = False
         else:
-            blinky.update(tilemap.tilemap, pacman, gl)
-
-    if(update_clyde):
-        if(clyde.x == pacman.x and clyde.y == pacman.y):
-            update_clyde = False
-        else:
-            clyde.update(tilemap.tilemap, pacman, gl)
-        
-    if(update_inky):
+            blinky.update(tilemap.tilemap, pacman, ghosts_list)
+    if(update_ghosts[1]): #inky
         if(inky.x == pacman.x and inky.y == pacman.y):
-            update_inky = False
+            update_ghosts[1] = False
         else:
-            inky.update(tilemap.tilemap, pacman, gl)
-
-    if(update_pinky):
+            inky.update(tilemap.tilemap, pacman, ghosts_list)
+    if(update_ghosts[2]): #pinky
         if(pinky.x == pacman.x and pinky.y == pacman.y):
-            update_pinky = False
+            update_ghosts[2] = False
         else:
-            pinky.update(tilemap.tilemap, pacman, gl)
+            pinky.update(tilemap.tilemap, pacman, ghosts_list)
+    if(update_ghosts[3]): #clyde
+        if(clyde.x == pacman.x and clyde.y == pacman.y):
+            update_ghosts[3] = False
+        else:
+            clyde.update(tilemap.tilemap, pacman, ghosts_list)
+    if(any(update_ghosts)):
+        screen.fill((0, 0, 0), update_region2)
 
     # render objects
     tilemap.render(screen)

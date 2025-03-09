@@ -182,11 +182,9 @@ def displayTestScreen(screen):
 
     dc6 = "Press Number (1-4) to make the ghosts move."
     dc7 = "Press (r) to reset the ghosts to their original position"
-    dc8 = "Press (c OR move Pacman) to refresh screen"
-    dc9 = "Drag the ghosts with LMB to move them"
-    dc10 = "Press RMB on a ghost to select"
-    dc11 = "Press the Arrow keys to change direciton"
-    dc12 = "Press Number (0) to stop selection"
+    dc8 = "Press (c OR let Pacman move) to refresh screen"
+    dc9 = "Hold the ghosts with LMB to move them"
+    dc10 = "Press RMB on a ghost change its direction"
 
     dc1_text = GAME_FONT_SMALL.render(dc1, True, (255, 255, 255))
     dc2_text = GAME_FONT_SMALL.render(dc2, True, (255, 255, 255))
@@ -198,8 +196,6 @@ def displayTestScreen(screen):
     dc8_text = GAME_FONT_SMALL.render(dc8, True, (255, 255, 255))
     dc9_text = GAME_FONT_SMALL.render(dc9, True, (255, 255, 255))
     dc10_text = GAME_FONT_SMALL.render(dc10, True, (255, 255, 255))
-    dc11_text = GAME_FONT_SMALL.render(dc11, True, (255, 255, 255))
-    dc12_text = GAME_FONT_SMALL.render(dc12, True, (255, 255, 255))
 
     screen.blit(dc1_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 8))
     screen.blit(dc2_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 10))
@@ -211,8 +207,36 @@ def displayTestScreen(screen):
     screen.blit(dc8_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 26))
     screen.blit(dc9_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 28))
     screen.blit(dc10_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 30))
-    screen.blit(dc11_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 32))
-    screen.blit(dc12_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 34))
+
+def setupTestScreen(screen, pacman, ghosts_list, tilemap, clear_map, update_ghosts, update_region):
+    if(not clear_map):
+        for i in range(MAP_HEIGHT):
+            for j in range(MAP_WIDTH):
+                if(tilemap.tilemap[i][j] < -1 and tilemap.tilemap[i][j] > -9):
+                    tilemap.tilemap[i][j] = -1
+        clear_map = True
+
+    ghosts_list[0].x, ghosts_list[0].y = 2, 34 #blinky
+    ghosts_list[1].x, ghosts_list[1].y = 10, 34 #inky
+    ghosts_list[2].x, ghosts_list[2].y = 20, 34 #pinky
+    ghosts_list[3].x, ghosts_list[3].y = 28, 34 #clyde
+
+    update_ghosts[0] = False
+    update_ghosts[1] = False
+    update_ghosts[2] = False
+    update_ghosts[3] = False
+
+    for g in ghosts_list:
+        g.MAX_SCATTER_TIME = 0
+        g.scatter_time = 0
+        g.MAX_CHASE_TIME = 10000
+        g.update(tilemap.tilemap, pacman, ghosts_list)
+        g.snapDisplayToGrid()
+    
+    screen.fill((0, 0, 0), update_region)
+    pygame.display.update()
+    
+    return clear_map, update_ghosts
 
 def displayGameInfo(screen, pacman, tile_map):
     #display pacman lives

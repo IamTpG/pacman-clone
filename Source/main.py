@@ -218,6 +218,11 @@ while(enable_test):
 
         gl = [blinky, clyde, inky, pinky]
 
+        update_blinky = False
+        update_clyde = False
+        update_inky = False
+        update_pinky = False
+
         for g in gl:
             g.MAX_SCATTER_TIME = 0
             g.scatter_time = 0
@@ -225,9 +230,6 @@ while(enable_test):
             g.update(tilemap.tilemap, pacman, gl)
             g.snapDisplayToGrid()
         
-        if(pacman.direction == "NONE"):
-            pacman.direction = "DOWN"
-
         screen.fill((0, 0, 0), update_region)
         pygame.display.update()
 
@@ -279,7 +281,7 @@ while(enable_test):
             if(event.button == 3):
                 select_ghost = True
                 for ghost in gl:
-                    if(abs(ghost.display_x - event.pos[0]) < TILE_SIZE * 3 and abs(ghost.display_y - event.pos[1]) < TILE_SIZE * 3):
+                    if(abs(ghost.display_x - event.pos[0]) < TILE_SIZE * 2 and abs(ghost.display_y - event.pos[1]) < TILE_SIZE * 2):
                         ghost.x, ghost.y = event.pos[0] // TILE_SIZE, event.pos[1] // TILE_SIZE
                         selected_ghost = ghost
                 SELECTED_GHOST_TEXT = GAME_FONT.render("Selected ghost: " + selected_ghost.name, True, (255, 255, 255))
@@ -352,7 +354,10 @@ if(not quiting):
     ending = True
     while (ending):
         for event in pygame.event.get():
-            if (event.type == pygame.QUIT or event.type == pygame.KEYDOWN):
+            if (event.type == pygame.QUIT):
                 ending = False
+            if (event.type == pygame.KEYDOWN):
+                if (event.key == pygame.constants.K_ESCAPE):
+                    ending = False
 
 pygame.quit()

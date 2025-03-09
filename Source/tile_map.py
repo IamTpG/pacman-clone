@@ -116,11 +116,11 @@ def displayEndCard(screen, win, tile_map):
 
     time_elapsed = pygame.time.get_ticks() - tile_map.start_time
 
-    time_played = GAME_FONT.render("TIME PLAYED: " + str(time_elapsed // 1000) + " seconds", True, (255, 150, 0))
+    time_played = GAME_FONT.render("TIME PLAYED: " + str(time_elapsed // 1000) + " secs", True, (255, 150, 0))
     screen.blit(time_played, (SCREEN_OFFSET * 15, SCREEN_OFFSET * 33))
 
-    exit_text = GAME_FONT_SMALL.render("Press Any Key to exit.", True, (0, 150, 255))
-    screen.blit(exit_text, (SCREEN_OFFSET * 15.5, SCREEN_OFFSET * 37))
+    exit_text = GAME_FONT_SMALL.render("Press ESC to exit.", True, (0, 150, 255))
+    screen.blit(exit_text, (SCREEN_OFFSET * 17, SCREEN_OFFSET * 37))
 
     return end_card_region
 

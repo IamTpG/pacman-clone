@@ -189,7 +189,8 @@ class Ghost:
 
         if (self.canTurn(tile_map) == True and self.lock_turn_time == 0):
             self.direction = self.getDirection(tile_map, pacman, ghost_list)
-            self.lock_turn_time = 2
+            if(self.state != "CHASE"): self.lock_turn_time = 2
+            else:   self.lock_turn_time = 1
 
         if (self.checkObstructionDirection(tile_map, self.direction)):
             self.snapDisplayToGrid()

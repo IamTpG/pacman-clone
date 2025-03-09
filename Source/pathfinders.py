@@ -128,60 +128,71 @@ def heuristic(a, b):
     # Manhattan distance as a heuristic (suitable for 4-directional movement)
     return abs(a[0] - b[0]) + abs(a[1] - b[1]) # Manhattan = |dx| + |dy|
 
-def dfs_limited(grid, start, goal, depth, limit, visited, expanded_list, direction_vector): 
-    rows, cols = len(grid), len(grid[0])
-    if start == goal:  # if goal
-        return [(start[0],start[1])]
-    if depth >= limit:  # reach limit
-        return None
-    
-    visited.add(start)  
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-    directions.remove((-direction_vector[0], -direction_vector[1]))
-    # up, down, left, right 
-    for di, dj in directions:
-        ni, nj = start[0] + di, start[1] + dj # consider this neighbor
-        if (1 <= ni <= len(grid) and 1 <= nj <= len(grid[0]) and grid[ni][nj] <=-1): # valid index and not wall
-            if ((ni, nj)) not in visited: 
-                expanded_list.append(start)
-                result = dfs_limited(grid, (ni,nj),goal, depth + 1, limit, visited,expanded_list, (di,dj))
-                if result is not None: 
-                    return [(start[0], start[1])] + result
-    return None
-def dfs_limited_stack(grid, start, goal, limit, visited, expanded_list, direction_vector): 
 
-    rows, cols = len(grid), len(grid[0])        
-    trace = [[(-1, -1) for i in range(0, cols + 1)] for j in range(0, rows + 1)]
-    depth = [[0 for i in range(0, cols + 1)] for j in range(0, rows + 1)]
-    prev_vector = [[(0, 0) for i in range(0, cols + 1)] for j in range(0, rows + 1)]
-    
-    prev_vector[start[0]][start[1]] = direction_vector
-    depth[start[0]][start[1]] = 0
-    found = False
-    visited.add(start)  
-    stack = [start]
+def findCycle(trace, u, v):
+    while (u != (-1, -1)):
+        u = trace[u[0]][u[1]]
+        if (u == v):
+            return True
+    return False
+
+def dls(grid, start, goal, expanded, ghost_list, limit, direction_vector):
+    # initialize variables
+    rows, cols = len(grid), len(grid[0])
+
    
 
-    while stack and (not found):
-        current = stack.pop()
-        if current == goal:
-            found = True
-            break
-        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-        old_direction = prev_vector[current[0]][current[1]]
-        directions.remove((-old_direction[0], -old_direction[1]))
-        expanded_list.append(current)
-        for di, dj in directions:
-            neighbor = (current[0] + di, current[1] + dj)
-            if 1 <= neighbor[0] <= rows and 1 <= neighbor[1] <= cols and grid[neighbor[0]][neighbor[1]] <= -1 and neighbor not in visited:
-                visited.add(neighbor)
-                depth[neighbor[0]][neighbor[1]] = depth[current[0]][current[1]] + 1
-                if(depth[neighbor[0]][neighbor[1]] >= limit):
-                    continue
-                trace[neighbor[0]][neighbor[1]] = current
-                prev_vector[neighbor[0]][neighbor[1]] = (di, dj)
-                stack.append(neighbor)
+    # used for calculating and limiting the DFS depth
+    depth = [[0 for i in range(0, cols + 1)] for j in range(0, rows + 1)]
+
+    # used for tracing back the path
+    prev_vector = [[(0, 0) for i in range(0, cols + 1)] for j in range(0, rows + 1)]
+    prev_vector[start[0]][start[1]] = direction_vector
+
+    # used for tracing back the path
+    trace = [[(-1, -1) for i in range(0, cols + 1)] for j in range(0, rows + 1)]
+    found = False
     
+    # have a list act as a stack
+    s = []
+    s.append(start)
+    depth[start[0]][start[1]] = 0
+
+    #main process
+    while (s and (not found)):
+        u = s.pop()
+
+        # used for analysis
+        expanded.add(u)
+
+         # directions = [left, right, up, down]
+        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+        old_direction = prev_vector[u[0]][u[1]]
+        directions.remove((-old_direction[0], -old_direction[1]))
+
+
+        if (depth[u[0]][u[1]] == limit):
+            continue
+
+        for di, dj in directions:
+            v = (u[0] + di, u[1] + dj)
+
+            # skip invalid moves
+            if (v[0] < 1 or v[0] > rows):   continue
+            if (v[1] < 1 or v[1] > cols):   continue
+            if (grid[v[0]][v[1]] != -1):    continue
+            if (findCycle(trace, u, v)):    continue
+
+            trace[v[0]][v[1]] = u
+            prev_vector[v[0]][v[1]] = (di, dj)
+            # early stopping
+            if (v == goal):
+                found = True
+                break
+
+            s.append(v)
+            depth[v[0]][v[1]] = depth[u[0]][u[1]] + 1
+
     if (found == False):
         return None
     
@@ -194,17 +205,16 @@ def dfs_limited_stack(grid, start, goal, limit, visited, expanded_list, directio
 
     path.reverse()
     return path
-def ids(grid, start, goal,expanded_list, ghost_list, self_direction):
-    depth_limit = 0
-    direciton_vector = direction_to_vector(self_direction) 
-    while depth_limit < MAX_DEPTH:  # Giới hạn độ sâu để tránh chạy vô tận
-        visited = set()
-        result = dfs_limited_stack(grid, start, goal, depth_limit, visited, expanded_list, direciton_vector)
-        
-        if result is not None:
-            return result  # Tìm thấy đường đi
-        depth_limit += 1
-    return None  # Không tìm thấy đường đi trong giới hạn
+
+def ids(grid, start, goal, expanded, ghost_list, self_direction):
+    rows, cols = len(grid), len(grid[0])
+    direction_vector = direction_to_vector(self_direction)
+    for depth in range(rows * cols):
+        path = dls(grid, start, goal, expanded, ghost_list, depth, direction_vector)
+        if (path is not None):
+            return path
+    
+    return None
 def a_star(grid, start, goal, expanded, ghost_list):
     #initialize variable
     rows, cols = len(grid), len(grid[0])

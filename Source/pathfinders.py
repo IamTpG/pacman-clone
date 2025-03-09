@@ -177,7 +177,7 @@ def dfs_limited_stack(grid, start, goal, limit, visited, expanded_list, directio
                 visited.add(neighbor)
                 depth[neighbor[0]][neighbor[1]] = depth[current[0]][current[1]] + 1
                 if(depth[neighbor[0]][neighbor[1]] >= limit):
-                    return None
+                    continue
                 trace[neighbor[0]][neighbor[1]] = current
                 prev_vector[neighbor[0]][neighbor[1]] = (di, dj)
                 stack.append(neighbor)
@@ -199,7 +199,7 @@ def ids(grid, start, goal,expanded_list, ghost_list, self_direction):
     direciton_vector = direction_to_vector(self_direction) 
     while depth_limit < MAX_DEPTH:  # Giới hạn độ sâu để tránh chạy vô tận
         visited = set()
-        result = dfs_limited(grid, start, goal, 0, depth_limit, visited, expanded_list, direciton_vector)
+        result = dfs_limited_stack(grid, start, goal, depth_limit, visited, expanded_list, direciton_vector)
         
         if result is not None:
             return result  # Tìm thấy đường đi

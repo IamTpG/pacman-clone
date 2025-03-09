@@ -289,6 +289,11 @@ while(enable_test):
             screen.fill((0, 0, 0), update_region)
 
         if(event.type == pygame.MOUSEMOTION and dragging_mouse):
+            if(abs(pacman.display_x - event.pos[0]) < TILE_SIZE * 2 and abs(pacman.display_y - event.pos[1]) < TILE_SIZE * 2):
+                pacman.direction = "NONE"
+                pacman.x, pacman.y = event.pos[0] // TILE_SIZE, event.pos[1] // TILE_SIZE
+                pacman.snapDisplayToGrid()
+                pygame.display.update(update_region)
             for ghost in gl:
                 if(abs(ghost.display_x - event.pos[0]) < TILE_SIZE * 2 and abs(ghost.display_y - event.pos[1]) < TILE_SIZE * 2):
                     ghost.x, ghost.y = event.pos[0] // TILE_SIZE, event.pos[1] // TILE_SIZE
@@ -298,7 +303,9 @@ while(enable_test):
     # update pacman
     pacman.update(tilemap.tilemap)
 
-    if(pacman.checkObstructionDirection(tilemap.tilemap, pacman.direction) == False):
+    if(pacman.checkObstructionDirection(tilemap.tilemap, pacman.direction)):
+        pacman.direction = "NONE"
+    if(pacman.direction != "NONE"):
         screen.fill((0, 0, 0), update_region)
 
     if(update_blinky):

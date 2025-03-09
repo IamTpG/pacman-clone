@@ -377,7 +377,7 @@ class Pinky(Ghost): # pinky (pink) use DFS search
         direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])
         
         if(not self.state == "SCARED"):
-            print (Pfinder.switch_case(direction))  
+            
             return Pfinder.switch_case(direction) 
         expanded_list = [(self.y, self.x)] # expanded is a list, i didnt quite understand the meaning of this list yet - Neidy 
         path = Pfinder.ids(tile_map,(self.y,self.x),target, expanded_list, ghost_list, self.direction)   

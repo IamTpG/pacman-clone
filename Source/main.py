@@ -111,10 +111,10 @@ while (running):
     pacman.eatFood(tilemap, ghosts_list)
 
     # update ghosts
-    blinky.update(tilemap.tilemap, pacman, ghosts_list)
-    clyde.update(tilemap.tilemap, pacman, ghosts_list)
-    inky.update(tilemap.tilemap, pacman, ghosts_list)
-    pinky.update(tilemap.tilemap, pacman, ghosts_list)
+    blinky.update(tilemap.tilemap, pacman, ghosts_list, enable_test)
+    clyde.update(tilemap.tilemap, pacman, ghosts_list, enable_test)
+    inky.update(tilemap.tilemap, pacman, ghosts_list, enable_test)
+    pinky.update(tilemap.tilemap, pacman, ghosts_list, enable_test)
 
     # check collision
     if (enable_invincibility):
@@ -223,6 +223,8 @@ update_ghosts = [update_blinky, update_inky, update_pinky, update_clyde]
 dragging_mouse = False
 
 # selection variables
+hold_time = 0
+hold_max_time = 100
 select_ghost = False
 selected_ghost = None
 
@@ -249,19 +251,6 @@ while(enable_test):
             if (event.key in input_mapping and pacman.lock_turn_time == 0 and not pacman.dead and not select_ghost):
                 pacman.queue_turn = input_mapping[event.key]
                 pacman.queue_time = pacman.MAX_QUEUE_TIME
-           
-            if (event.key == pygame.K_1):
-                update_ghosts[0] = True #blinky
-                blinky.snapDisplayToGrid()
-            if (event.key == pygame.K_2):
-                update_ghosts[1] = True #inky
-                clyde.snapDisplayToGrid()
-            if (event.key == pygame.K_3):
-                update_ghosts[2] = True #pinky
-                inky.snapDisplayToGrid()
-            if (event.key == pygame.K_4):
-                update_ghosts[3] = True #clyde
-                pinky.snapDisplayToGrid()
 
             if(event.key == pygame.K_r):
                 setup = True
@@ -271,6 +260,7 @@ while(enable_test):
         if (event.type == pygame.MOUSEBUTTONDOWN):
             if(event.button == 1):
                 dragging_mouse = True
+                hold_time = pygame.time.get_ticks()
                 for ghost in ghosts_list:
                     if(abs(ghost.display_x - event.pos[0]) < TILE_SIZE * 2 and abs(ghost.display_y - event.pos[1]) < TILE_SIZE * 2):
                         selected_ghost = ghost
@@ -287,6 +277,11 @@ while(enable_test):
                                 select_ghost = True
                     
         if (event.type == pygame.MOUSEBUTTONUP):
+            if(event.button == 1):
+                if(pygame.time.get_ticks() - hold_time < hold_max_time):
+                    for i in range(4):
+                        if(abs(ghosts_list[i].display_x - event.pos[0]) < TILE_SIZE * 2 and abs(ghosts_list[i].display_y - event.pos[1]) < TILE_SIZE * 2):
+                            update_ghosts[i] = True
             if(select_ghost or abs(pacman.display_x - event.pos[0]) < TILE_SIZE * 2 and abs(pacman.display_y - event.pos[1]) < TILE_SIZE * 2):
                 screen.fill((0, 0, 0), update_region)
             if(event.button == 3 and selected_ghost != None):
@@ -324,22 +319,22 @@ while(enable_test):
         if(blinky.x == pacman.x and blinky.y == pacman.y):
             update_ghosts[0] = False
         else:
-            blinky.update(tilemap.tilemap, pacman, ghosts_list)
+            blinky.update(tilemap.tilemap, pacman, ghosts_list, enable_test)
     if(update_ghosts[1]): #inky
         if(inky.x == pacman.x and inky.y == pacman.y):
             update_ghosts[1] = False
         else:
-            inky.update(tilemap.tilemap, pacman, ghosts_list)
+            inky.update(tilemap.tilemap, pacman, ghosts_list, enable_test)
     if(update_ghosts[2]): #pinky
         if(pinky.x == pacman.x and pinky.y == pacman.y):
             update_ghosts[2] = False
         else:
-            pinky.update(tilemap.tilemap, pacman, ghosts_list)
+            pinky.update(tilemap.tilemap, pacman, ghosts_list, enable_test)
     if(update_ghosts[3]): #clyde
         if(clyde.x == pacman.x and clyde.y == pacman.y):
             update_ghosts[3] = False
         else:
-            clyde.update(tilemap.tilemap, pacman, ghosts_list)
+            clyde.update(tilemap.tilemap, pacman, ghosts_list, enable_test)
     if(any(update_ghosts)):
         screen.fill((0, 0, 0), update_region2)
 

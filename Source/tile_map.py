@@ -180,11 +180,11 @@ def displayTestScreen(screen):
     dc4 = "The ghosts will always chase Pacman"
     dc5 = "A ghost will automatically stop when it reaches pacman"
 
-    dc6 = "Press Number (1-4) to make the ghosts move."
-    dc7 = "Press (r) to reset the ghosts to their original position"
-    dc8 = "Press (c OR let Pacman move) to refresh screen"
-    dc9 = "Hold the ghosts with LMB to move them"
-    dc10 = "Press RMB on a ghost change its direction"
+    dc6 = "Press (r) to reset the ghosts to their original position"
+    dc7 = "Press (c OR let Pacman move) to refresh screen"
+    dc8 = "Hold the ghosts with LMB to move them"
+    dc9 = "Press RMB on a ghost change its direction"
+    dc10 = "Press LMB on a ghost to move it"
 
     dc1_text = GAME_FONT_SMALL.render(dc1, True, (255, 255, 255))
     dc2_text = GAME_FONT_SMALL.render(dc2, True, (255, 255, 255))
@@ -230,7 +230,7 @@ def setupTestScreen(screen, pacman, ghosts_list, tilemap, clear_map, update_ghos
         g.MAX_SCATTER_TIME = 0
         g.scatter_time = 0
         g.MAX_CHASE_TIME = 10000
-        g.update(tilemap.tilemap, pacman, ghosts_list)
+        g.update(tilemap.tilemap, pacman, ghosts_list, True)
         g.snapDisplayToGrid()
     
     screen.fill((0, 0, 0), update_region)

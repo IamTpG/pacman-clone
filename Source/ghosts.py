@@ -189,11 +189,11 @@ class Ghost:
 
         return any(not self.checkObstructionDirection(tile_map, direction) for direction in allowed_turns[self.direction])
 
-    def update(self, tile_map, pacman, ghost_list):
+    def update(self, tile_map, pacman, ghost_list, enable_test):
         if (self.state == "FROZEN"):
             return
-
-        self.preventGhostOverlap(ghost_list)
+        
+        if(not enable_test): self.preventGhostOverlap(ghost_list)
 
         if (self.canTurn(tile_map) == True and self.lock_turn_time == 0):
             self.direction = self.getDirection(tile_map, pacman, ghost_list)

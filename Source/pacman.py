@@ -23,55 +23,28 @@ PACMAN_SPEED = TMap.PACMAN_SPEED
 GHOST_SPEED = TMap.GHOST_SPEED
 SCALING_FACTOR = 2.3
 
-def loadPacmanDeathFrames():
-    frame1 = pygame.image.load("Resource\\pacman\\death_animation\\death1.png")
-    frame2 = pygame.image.load("Resource\\pacman\\death_animation\\death2.png")
-    frame3 = pygame.image.load("Resource\\pacman\\death_animation\\death3.png")
-    frame4 = pygame.image.load("Resource\\pacman\\death_animation\\death4.png")
-    frame5 = pygame.image.load("Resource\\pacman\\death_animation\\death5.png")
-    frame6 = pygame.image.load("Resource\\pacman\\death_animation\\death6.png")
-    frame7 = pygame.image.load("Resource\\pacman\\death_animation\\death7.png")
-    frame8 = pygame.image.load("Resource\\pacman\\death_animation\\death8.png")
-    frame9 = pygame.image.load("Resource\\pacman\\death_animation\\death9.png")
-    frame10 = pygame.image.load("Resource\\pacman\\death_animation\\death10.png")
-    frame11 = pygame.image.load("Resource\\pacman\\death_animation\\death11.png")
+opposite_direction = {
+    "UP": "DOWN",
+    "DOWN": "UP",
+    "LEFT": "RIGHT",
+    "RIGHT": "LEFT"
+}
 
-    frames = [
-        frame1, frame2, frame3, frame4, frame5, frame6, frame7, frame8, frame9, frame10, frame11
-    ]
+def loadPacmanDeathFrames():
+    frames = [None for _ in range(11)]
 
     for i in range(11):
+        frames[i] = pygame.image.load("Resource\\pacman\\death_animation\\death" + str(i + 1) + ".png")
         frames[i] = pygame.transform.scale(frames[i], (PACMAN_RADIUS * SCALING_FACTOR, PACMAN_RADIUS * SCALING_FACTOR))
 
     return frames
 
 def loadPacmanMovementFrames():
-    frame1UP = pygame.image.load("Resource\\pacman\\movement_animation\\up\\1.png")
-    frame2UP = pygame.image.load("Resource\\pacman\\movement_animation\\up\\2.png")
-    frame3UP = pygame.image.load("Resource\\pacman\\movement_animation\\up\\3.png")
-    frame1DOWN = pygame.image.load("Resource\\pacman\\movement_animation\\down\\1.png")
-    frame2DOWN = pygame.image.load("Resource\\pacman\\movement_animation\\down\\2.png")
-    frame3DOWN = pygame.image.load("Resource\\pacman\\movement_animation\\down\\3.png")
-    frame1LEFT = pygame.image.load("Resource\\pacman\\movement_animation\\left\\1.png")
-    frame2LEFT = pygame.image.load("Resource\\pacman\\movement_animation\\left\\2.png")
-    frame3LEFT = pygame.image.load("Resource\\pacman\\movement_animation\\left\\3.png")
-    frame1RIGHT = pygame.image.load("Resource\\pacman\\movement_animation\\right\\1.png")
-    frame2RIGHT = pygame.image.load("Resource\\pacman\\movement_animation\\right\\2.png")
-    frame3RIGHT = pygame.image.load("Resource\\pacman\\movement_animation\\right\\3.png")
+    frames = [[None for _ in range(3)] for _ in range(4)] 
 
-    frames = [[
-                frame1UP, frame2UP, frame3UP
-            ], [
-                frame1DOWN, frame2DOWN, frame3DOWN
-            ], [
-                frame1LEFT, frame2LEFT, frame3LEFT
-            ], [
-                frame1RIGHT, frame2RIGHT, frame3RIGHT
-            ]
-        ]
-    
     for i in range(4):
         for j in range(3):
+            frames[i][j] = pygame.image.load("Resource\\pacman\\movement_animation\\" + ["up", "down", "left", "right"][i] + "\\" + str(j + 1) + ".png")
             frames[i][j] = pygame.transform.scale(frames[i][j], (PACMAN_RADIUS * SCALING_FACTOR, PACMAN_RADIUS * SCALING_FACTOR))
 
     return frames
@@ -156,7 +129,7 @@ class Pacman:
         return False
 
     def checkCollision(self, tile_map, ghosts : list, starting_positions : list):
-        COLLISION_RADIUS = 5
+        COLLISION_RADIUS = 8
 
         for ghost in ghosts:
             if(abs(self.display_x - ghost.display_x) < COLLISION_RADIUS and 
@@ -175,6 +148,7 @@ class Pacman:
                     tile_map.score += 200
                     ghost.state = "DEAD"
                     ghost.speed = TMap.GHOST_SPEED
+                    ghost.direction = opposite_direction[ghost.direction]
                     ghost.snapDisplayToGrid()
         
         if self.dead == True and self.death_frames_counter == 1:

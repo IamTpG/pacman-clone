@@ -46,7 +46,7 @@ pacman_starting_position = (15, 28)
 blinky_starting_position = (17, 19)
 clyde_starting_position  = (15, 19)
 inky_starting_position   = (13, 19)
-pinky_starting_position  = (17, 16)
+pinky_starting_position  = (15, 16)
 
 starting_positions = [pacman_starting_position, blinky_starting_position, clyde_starting_position, inky_starting_position, pinky_starting_position]
 
@@ -83,6 +83,11 @@ enable_test = False #default False
 key_order_tm = [pygame.K_t, pygame.K_e, pygame.K_s, pygame.K_t, pygame.K_m, pygame.K_o, pygame.K_d, pygame.K_e] #[testmode] 
 test_input_queue = []
 
+#extra codes
+enable_invincibility = False #default False
+key_order_invc = [pygame.K_u, pygame.K_n, pygame.K_d, pygame.K_i, pygame.K_e] #[undie]
+invincibility_input_queue = []
+
 #debug
 print("Fix these pngs files bruh")
 
@@ -112,7 +117,9 @@ while (running):
     pinky.update(tilemap.tilemap, pacman, ghosts_list)
 
     # check collision
-    if (pacman.checkCollision(tilemap, ghosts_list, starting_positions)):
+    if (enable_invincibility):
+        pass
+    elif (pacman.checkCollision(tilemap, ghosts_list, starting_positions)):
         win = False
         running = False
 
@@ -172,6 +179,15 @@ while (running):
                 if (test_input_queue == key_order_tm and not enable_test):
                     print("TEST MODE ENABLED")
                     enable_test = True
+
+                #check for invincibility mode entry
+                if (event.type == pygame.KEYDOWN and not enable_invincibility):
+                    invincibility_input_queue.append(event.key)
+                if (len(invincibility_input_queue) > len(key_order_invc)):
+                    invincibility_input_queue.pop(0)
+                if (invincibility_input_queue == key_order_invc and not enable_invincibility):
+                    print("INVINCIBILITY ENABLED")
+                    enable_invincibility = True
 
             if (not running):
                 break

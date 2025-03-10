@@ -1,5 +1,6 @@
 if __name__ == '__main__':
     print("This is a module. Not meant to be run standalone.")
+    exit()
 
 import heapq
 from collections import deque

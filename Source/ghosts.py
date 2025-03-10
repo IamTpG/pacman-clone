@@ -32,54 +32,27 @@ opposite_direction = {
     "RIGHT": "LEFT"
 }
 
+# load common ghost frames
+scared = pygame.image.load("Resource\\ghosts\\scared.png")
+scared2 = pygame.image.load("Resource\\ghosts\\scared2.png")
+deadUP = pygame.image.load("Resource\\ghosts\\deadUp.png")
+deadDOWN = pygame.image.load("Resource\\ghosts\\deadDown.png")
+deadLEFT = pygame.image.load("Resource\\ghosts\\deadLeft.png")
+deadRIGHT = pygame.image.load("Resource\\ghosts\\deadRight.png")
+extra_frames = [scared, scared2, deadUP, deadDOWN, deadLEFT, deadRIGHT]
+
 def loadGhostFrames(name):
-    blinky_DOWN     = pygame.image.load("Resource\\ghosts\\" + name + "\\down.png")
-    blinky_UP       = pygame.image.load("Resource\\ghosts\\" + name + "\\up.png")
-    blinky_LEFT     = pygame.image.load("Resource\\ghosts\\" + name + "\\left.png")
-    blinky_RIGHT    = pygame.image.load("Resource\\ghosts\\" + name + "\\right.png")
+    ghost_frames = [None for _ in range(10)]
 
-    inky_DOWN       = pygame.image.load("Resource\\ghosts\\" + name + "\\down.png")
-    inky_UP         = pygame.image.load("Resource\\ghosts\\" + name + "\\up.png")
-    inky_LEFT       = pygame.image.load("Resource\\ghosts\\" + name + "\\left.png")
-    inky_RIGHT      = pygame.image.load("Resource\\ghosts\\" + name + "\\right.png")
-
-    clyde_DOWN      = pygame.image.load("Resource\\ghosts\\" + name + "\\down.png")
-    clyde_UP        = pygame.image.load("Resource\\ghosts\\" + name + "\\up.png")
-    clyde_LEFT      = pygame.image.load("Resource\\ghosts\\" + name + "\\left.png")
-    clyde_RIGHT     = pygame.image.load("Resource\\ghosts\\" + name + "\\right.png")
-
-    pinky_DOWN  = pygame.image.load("Resource\\ghosts\\" + name + "\\down.png")
-    pinky_UP    = pygame.image.load("Resource\\ghosts\\" + name + "\\up.png")
-    pinky_LEFT  = pygame.image.load("Resource\\ghosts\\" + name + "\\left.png")
-    pinky_RIGHT = pygame.image.load("Resource\\ghosts\\" + name + "\\right.png")
-
-    feared      = pygame.image.load("Resource\\ghosts\\scared.png")
-    feared2     = pygame.image.load("Resource\\ghosts\\scared2.png")
-    deadUP      = pygame.image.load("Resource\\ghosts\\deadUp.png")
-    deadDOWN    = pygame.image.load("Resource\\ghosts\\deadDown.png")
-    deadLEFT    = pygame.image.load("Resource\\ghosts\\deadLeft.png")
-    deadRIGHT   = pygame.image.load("Resource\\ghosts\\deadRight.png")
-
-    blinky_frames   = [blinky_DOWN, blinky_UP, blinky_LEFT, blinky_RIGHT, feared, feared2, deadDOWN, deadUP, deadLEFT, deadRIGHT]
-    inky_frames     = [inky_DOWN,   inky_UP,   inky_LEFT,   inky_RIGHT,   feared, feared2, deadDOWN, deadUP, deadLEFT, deadRIGHT]
-    clyde_frames    = [clyde_DOWN,  clyde_UP,  clyde_LEFT,  clyde_RIGHT,  feared, feared2, deadDOWN, deadUP, deadLEFT, deadRIGHT]
-    pinky_frames    = [pinky_DOWN,  pinky_UP,  pinky_LEFT,  pinky_RIGHT,  feared, feared2, deadDOWN, deadUP, deadLEFT, deadRIGHT]
-
+    for i in range(4):
+        ghost_frames[i] = pygame.image.load("Resource\\ghosts\\" + name + "\\" + ["down", "up", "left", "right"][i] + ".png")
     for i in range(6):
-        blinky_frames[i]    = pygame.transform.scale(blinky_frames[i], (GHOST_RADIUS * SCALING_FACTOR * 2, GHOST_RADIUS * SCALING_FACTOR * 2))
-        inky_frames[i]      = pygame.transform.scale(inky_frames[i], (GHOST_RADIUS * SCALING_FACTOR * 2, GHOST_RADIUS * SCALING_FACTOR * 2))
-        clyde_frames[i]     = pygame.transform.scale(clyde_frames[i], (GHOST_RADIUS * SCALING_FACTOR * 2, GHOST_RADIUS * SCALING_FACTOR * 2))
-        pinky_frames[i]     = pygame.transform.scale(pinky_frames[i], (GHOST_RADIUS * SCALING_FACTOR * 2, GHOST_RADIUS * SCALING_FACTOR * 2))
+        ghost_frames[i + 4] = extra_frames[i]
 
-    ghost_frames = {
-        "blinky":   blinky_frames,
-        "inky":     inky_frames,
-        "clyde":    clyde_frames,
-        "pinky":    pinky_frames
-    }
+    for i in range(10):
+        ghost_frames[i] = pygame.transform.scale(ghost_frames[i], (int(GHOST_RADIUS * SCALING_FACTOR * 2), int(GHOST_RADIUS * SCALING_FACTOR * 2)))
 
-    return ghost_frames[name]
-
+    return ghost_frames
 
 class Ghost:
     def __init__(self, starting_position, direction, name):
@@ -105,6 +78,8 @@ class Ghost:
 
         # lock turning
         self.lock_turn_time = 0
+        self.cooldown_timer = 0
+        self.collision_count = 0
 
         # movement
         self.direction = direction
@@ -169,6 +144,38 @@ class Ghost:
             return True
         return False
 
+    import random
+
+    def preventGhostOverlap(self, ghost_list):
+        COLLISION_RADIUS = self.radius * 1.5
+        if(self.cooldown_timer > 0):
+            self.cooldown_timer -= 1
+            return
+
+        collision_detected = False
+
+        for i in range(len(ghost_list)):
+            if (self == ghost_list[i]): continue
+            if (self.state == "DEAD" or ghost_list[i].state == "DEAD"): continue
+
+            if (abs(self.display_x - ghost_list[i].display_x) < COLLISION_RADIUS and 
+                abs(self.display_y - ghost_list[i].display_y) < COLLISION_RADIUS):
+                self.direction = opposite_direction[self.direction]
+                self.collision_count += 1
+                self.snapDisplayToGrid()
+                self.cooldown_timer = 5
+                collision_detected = True
+
+        if (not collision_detected):
+            self.collision_count = 0
+            
+        if (self.collision_count > 5): # if 2 ghosts are stuck inside each other, teleport it to the ghost house
+            self.x = random.choice([13, 15, 17])
+            self.y = 19
+            self.collision_count = 0
+            self.snapDisplayToGrid()
+
+    
     def canTurn(self, tile_map):
         if (self.direction == "NONE"):
             return False
@@ -185,6 +192,8 @@ class Ghost:
     def update(self, tile_map, pacman, ghost_list):
         if (self.state == "FROZEN"):
             return
+
+        self.preventGhostOverlap(ghost_list)
 
         if (self.canTurn(tile_map) == True and self.lock_turn_time == 0):
             self.direction = self.getDirection(tile_map, pacman, ghost_list)

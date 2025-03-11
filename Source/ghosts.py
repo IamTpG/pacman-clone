@@ -296,9 +296,9 @@ class Ghost:
         else:
             screen.blit(self.frames[direction_mapping[self.direction]], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
 
-class Blinky(Ghost): # blinky (red) uses A* search
-    def __init__(self, starting_position, direction):
-        super().__init__(starting_position, direction, "blinky")
+class AStarGhost(Ghost):
+    def __init__(self, starting_position, direction, name):
+        super().__init__(starting_position, direction, name)
 
     def getDirection(self, tile_map, pacman, ghost_list): 
         target = (0, 0)
@@ -320,9 +320,9 @@ class Blinky(Ghost): # blinky (red) uses A* search
         direction = Pfinder.identifyDirection(path)
         return direction
 
-class Inky(Ghost): # Inky (blue) uses BFS search
-    def __init__(self, starting_position, direction):
-        super().__init__(starting_position, direction, "inky")
+class BFSGhost(Ghost): 
+    def __init__(self, starting_position, direction, name):
+        super().__init__(starting_position, direction, name)
     
     def getDirection(self, tile_map, pacman, ghost_list):  
         target = (0, 0)
@@ -345,9 +345,9 @@ class Inky(Ghost): # Inky (blue) uses BFS search
         direction = Pfinder.identifyDirection(path)
         return direction
 
-class Clyde(Ghost): # Clyde (orange) uses UCS search
-    def __init__(self, starting_position, direction):
-        super().__init__(starting_position, direction, "clyde")
+class UCSGhost(Ghost):
+    def __init__(self, starting_position, direction, name):
+        super().__init__(starting_position, direction, name)
     
     def getDirection(self, tile_map, pacman, ghost_list):  
         target = (0, 0)
@@ -370,9 +370,9 @@ class Clyde(Ghost): # Clyde (orange) uses UCS search
         direction = Pfinder.identifyDirection(path)
         return direction
     
-class Pinky(Ghost): # Pinky (pink) uses IDS search
-    def __init__(self, starting_position, direction):
-        super().__init__(starting_position, direction, "pinky")
+class IDSGhost(Ghost):
+    def __init__(self, starting_position, direction, name):
+        super().__init__(starting_position, direction, name)
     
     # override with specific behavior
     def getDirection(self, tile_map, pacman, ghost_list):  

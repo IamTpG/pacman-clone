@@ -51,10 +51,10 @@ pinky_starting_position  = (15, 16)
 starting_positions = [pacman_starting_position, blinky_starting_position, clyde_starting_position, inky_starting_position, pinky_starting_position]
 
 pacman  = pacman_m.Pacman(pacman_starting_position, "NONE")
-blinky  = ghosts.Blinky(blinky_starting_position, "UP")
-clyde   = ghosts.Clyde(clyde_starting_position, "UP")
-inky    = ghosts.Inky(inky_starting_position, "UP")
-pinky   = ghosts.Pinky(pinky_starting_position, "UP")
+blinky  = ghosts.AStarGhost(blinky_starting_position, "UP", "blinky")
+clyde   = ghosts.BFSGhost(clyde_starting_position, "UP", "clyde")
+inky    = ghosts.UCSGhost(inky_starting_position, "UP", "inky")
+pinky   = ghosts.IDSGhost(pinky_starting_position, "UP", "pinky")
 
 ghosts_list = [blinky, inky, pinky, clyde]
 
@@ -224,7 +224,7 @@ dragging_mouse = False
 
 # selection variables
 hold_time = 0
-hold_max_time = 100
+hold_max_time = 200
 select_ghost = False
 selected_ghost = None
 

@@ -173,41 +173,34 @@ def displayTestScreen(screen):
     TEST_TEXT = GAME_FONT_LARGE.render("... TEST MODE ...", True, (0, 255, 255))
     screen.blit(TEST_TEXT, (SCREEN_OFFSET * 53.5, SCREEN_OFFSET * 2.6))
 
-    dc1 = "Welcome to the test screen!"
-    dc2 = "This screen is used to show the pathfinding of the ghosts"
+    dc0 = "Welcome to the test screen!"
+    dc1 = "This screen is used to show the pathfinding of the ghosts"
 
-    dc3 = "Move Pacman with Arrow keys or Mouse Dragging"
-    dc4 = "The ghosts will always chase Pacman"
-    dc5 = "A ghost will automatically stop when it reaches pacman"
+    dc2 = "Move Pacman with Arrow keys or Mouse Dragging"
+    dc3 = "The ghosts will always chase Pacman"
+    dc4 = "A ghost will automatically stop when it reaches pacman"
 
-    dc6 = "Press (r) to reset the ghosts to their original position"
-    dc7 = "Press (c OR let Pacman move) to refresh screen"
-    dc8 = "Hold the ghosts with LMB to move them"
-    dc9 = "Press RMB on a ghost change its direction"
-    dc10 = "Press LMB on a ghost to move it"
+    dc5 = "Press (r) to reset the ghosts to their original position"
+    dc6 = "Press (c OR let Pacman move) to refresh screen"
+    dc7 = "Hold the ghosts with LMB to move them"
+    dc8 = "Press RMB on a ghost change its direction"
+    dc9 = "Press LMB on a ghost to move it"
 
-    dc1_text = GAME_FONT_SMALL.render(dc1, True, (255, 255, 255))
-    dc2_text = GAME_FONT_SMALL.render(dc2, True, (255, 255, 255))
-    dc3_text = GAME_FONT_SMALL.render(dc3, True, (255, 255, 255))
-    dc4_text = GAME_FONT_SMALL.render(dc4, True, (255, 255, 255))
-    dc5_text = GAME_FONT_SMALL.render(dc5, True, (255, 255, 255))
-    dc6_text = GAME_FONT_SMALL.render(dc6, True, (255, 255, 255))
-    dc7_text = GAME_FONT_SMALL.render(dc7, True, (255, 255, 255))
-    dc8_text = GAME_FONT_SMALL.render(dc8, True, (255, 255, 255))
-    dc9_text = GAME_FONT_SMALL.render(dc9, True, (255, 255, 255))
-    dc10_text = GAME_FONT_SMALL.render(dc10, True, (255, 255, 255))
+    dc10 = "Red Ghost uses A* pathfinding"
+    dc11 = "Pink Ghost uses IDS pathfinding"
+    dc12 = "Blue Ghost uses UCS pathfinding"
+    dc13 = "Orange Ghost uses BFS pathfinding"
 
-    screen.blit(dc1_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 8))
-    screen.blit(dc2_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 10))
-    screen.blit(dc3_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 14))
-    screen.blit(dc4_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 16))
-    screen.blit(dc5_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 18))
-    screen.blit(dc6_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 22))
-    screen.blit(dc7_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 24))
-    screen.blit(dc8_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 26))
-    screen.blit(dc9_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 28))
-    screen.blit(dc10_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 30))
-
+    description = [dc0, dc1, dc2, dc3, dc4, dc5, dc6, dc7, dc8, dc9, dc10, dc11, dc12, dc13]
+    block = 2
+    for i in range(len(description)):
+        dc_text = GAME_FONT_SMALL.render(description[i], True, (255, 255, 255))
+        screen.blit(dc_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * (4 + block * 1.5)))
+        if(i == 1 or i == 4 or i == 6 or i == 9):
+            block += 2
+        else:
+            block += 1
+        
 def setupTestScreen(screen, pacman, ghosts_list, tilemap, clear_map, update_ghosts, update_region):
     if(not clear_map):
         for i in range(MAP_HEIGHT):

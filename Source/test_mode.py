@@ -46,6 +46,12 @@ ghosts_mapping = {
     pygame.constants.K_3: 2,
     pygame.constants.K_4: 3
 }
+ghosts_colors_mapping = {
+    "blinky": (255, 0, 0), # red
+    "inky": (0, 255, 255), # cyan
+    "pinky": (255, 105, 180), # pink
+    "clyde": (255, 165, 0) # orange
+}
 
 # setup variables
 setup = True
@@ -121,7 +127,7 @@ def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_l
 
                 if (event.key in input_mapping and select_ghost):
                     selected_ghost.direction = input_mapping[event.key]
-                    SELECTED_GHOST_TEXT = GAME_FONT.render("Selected: " + selected_ghost.name + " | Direction: " + selected_ghost.direction, True, (255, 255, 0))
+                    SELECTED_GHOST_TEXT = GAME_FONT.render("Selected: " + selected_ghost.name + " | Direction: " + selected_ghost.direction, True, ghosts_colors_mapping[selected_ghost.name])
                     screen.fill((0, 0, 0), update_region2)
                     screen.blit(SELECTED_GHOST_TEXT, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 45))
 
@@ -149,7 +155,7 @@ def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_l
                         selected_ghost = ghosts_list[ghosts_mapping[event.key]]
                         select_ghost = True
                         screen.fill((0, 0, 0), update_region2)
-                        SELECTED_GHOST_TEXT = GAME_FONT.render("Selected: " + selected_ghost.name + " | Direction: " + selected_ghost.direction, True, (255, 255, 0))
+                        SELECTED_GHOST_TEXT = GAME_FONT.render("Selected: " + selected_ghost.name + " | Direction: " + selected_ghost.direction, True, ghosts_colors_mapping[selected_ghost.name])
                         screen.blit(SELECTED_GHOST_TEXT, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 45))
 
             if (event.type == pygame.MOUSEBUTTONDOWN):

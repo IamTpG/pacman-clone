@@ -24,6 +24,8 @@ PACMAN_SPEED = 2
 GHOST_RADIUS = TILE_SIZE - 5
 GHOST_SPEED = 2
 
+FPS = 60
+
 # ghost colors 
 ghost_colors = {
     "blinky": (255, 0, 0),
@@ -180,28 +182,38 @@ def displayTestScreen(screen):
     dc3 = "The ghosts will always chase Pacman"
     dc4 = "A ghost will automatically stop when it reaches pacman"
 
-    dc5 = "Press (r) to reset the ghosts to their original position"
-    dc6 = "Press (c OR let Pacman move) to refresh screen"
-    dc7 = "Hold the ghosts with LMB to move them"
-    dc8 = "Press RMB on a ghost change its direction"
-    dc9 = "Press LMB on a ghost to move it"
+    dc5 = "Blinky (red) uses A* pathfinding"
+    dc6 = "Inky (cyan) uses UCS pathfinding"
+    dc7 = "Pinky (pink) uses DFS/IDS pathfinding"
+    dc8 = "Clyde (orange) uses BFS pathfinding"
 
-    dc10 = "Red Ghost uses A* pathfinding"
-    dc11 = "Pink Ghost uses IDS pathfinding"
-    dc12 = "Blue Ghost uses UCS pathfinding"
-    dc13 = "Orange Ghost uses BFS pathfinding"
+    dc9 =  "            .. Ghost Controls .."
+    dc10 = "                   . Mouse .         . Keyboard ."
+    dc11 = "Selection:           [NONE]            Number 1-4"
+    dc12 = "Change Direction:    RMB               Right Click"
+    dc13 = "Move Position:       Drag LMB          W A S D"
+    dc14 = "Start Update:        LMB               Number 1-4"
+    dc15 = "Reset ALL Position:  [NONE]            R"
+    dc16 = "Refresh Screen:      [NONE]            C"
+    dc17 = "Select Preset Test:  [NONE]            LSHIFT + Number 0-5"
 
-    description = [dc0, dc1, dc2, dc3, dc4, dc5, dc6, dc7, dc8, dc9, dc10, dc11, dc12, dc13]
+    description = [dc0, dc1, dc2, dc3, dc4, dc5, dc6, dc7, dc8, dc9, dc10, dc11, dc12, dc13, dc14, dc15, dc16, dc17]
     block = 2
     for i in range(len(description)):
-        dc_text = GAME_FONT_SMALL.render(description[i], True, (255, 255, 255))
+        if(i == 9): dc_text = GAME_FONT.render(description[i], True, (0, 255, 255))
+        elif (i == 5): dc_text = GAME_FONT_SMALL.render(description[i], True, (255, 0, 0))
+        elif (i == 6): dc_text = GAME_FONT_SMALL.render(description[i], True, (0, 255, 255))
+        elif (i == 7): dc_text = GAME_FONT_SMALL.render(description[i], True, (255, 105, 180))
+        elif (i == 8): dc_text = GAME_FONT_SMALL.render(description[i], True, (255, 165, 0))
+        elif (i == 10): dc_text = GAME_FONT_SMALL.render(description[i], True, (255, 150, 0))
+        else: dc_text = GAME_FONT_SMALL.render(description[i], True, (255, 255, 255))
         screen.blit(dc_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * (4 + block * 1.5)))
-        if(i == 1 or i == 4 or i == 6 or i == 9):
+        if(i == 1 or i == 4 or i == 8 or i == 9):
             block += 2
         else:
             block += 1
         
-def setupTestScreen(screen, pacman, ghosts_list, tilemap, clear_map, update_ghosts, update_region):
+def setupTestScreen(screen, pacman, ghosts_list, tilemap, clear_map, update_ghosts, update_region, preset, preset_position):
     if(not clear_map):
         for i in range(MAP_HEIGHT):
             for j in range(MAP_WIDTH):
@@ -209,10 +221,13 @@ def setupTestScreen(screen, pacman, ghosts_list, tilemap, clear_map, update_ghos
                     tilemap.tilemap[i][j] = -1
         clear_map = True
 
-    ghosts_list[0].x, ghosts_list[0].y = 2, 34 #blinky
-    ghosts_list[1].x, ghosts_list[1].y = 10, 34 #inky
-    ghosts_list[2].x, ghosts_list[2].y = 20, 34 #pinky
-    ghosts_list[3].x, ghosts_list[3].y = 28, 34 #clyde
+    ghosts_list[0].x, ghosts_list[0].y = preset_position[preset][1][0], preset_position[preset][1][1] #blinky
+    ghosts_list[1].x, ghosts_list[1].y = preset_position[preset][2][0], preset_position[preset][2][1] #inky
+    ghosts_list[2].x, ghosts_list[2].y = preset_position[preset][3][0], preset_position[preset][3][1] #pinky
+    ghosts_list[3].x, ghosts_list[3].y = preset_position[preset][4][0], preset_position[preset][4][1] #clyde
+
+    pacman.x, pacman.y = preset_position[preset][0][0], preset_position[preset][0][1]
+    pacman.snapDisplayToGrid()
 
     update_ghosts[0] = False
     update_ghosts[1] = False

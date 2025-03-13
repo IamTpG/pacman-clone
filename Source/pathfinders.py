@@ -5,8 +5,7 @@ if __name__ == '__main__':
 import heapq
 from collections import deque
 
-# DIRECTIONS = [left, right, up, down]
-DIRECTIONS = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+MAX_DEPTH = 1000  # Giới hạn độ sâu tối đa 
 
 # Ghosts' house position
 GATE  = [(19, 14), (19, 15), (19, 16)]
@@ -16,26 +15,29 @@ HOUSE = [(19, 14), (19, 15), (19, 16),
 
 
 # Tracing back the path from start to goal
-def tracePath(tracer, start, goal):
+def tracePath(trace, start, goal):
     u = goal
     path = [goal]
 
     while (u != start):
-        u = tracer[u[0]][u[1]]
+        u = trace[u[0]][u[1]]
         path.append(u)
 
     path.reverse()
     return path
 
 
-def bfs(grid, start, goal, expanded):
+def bfs(grid, start, goal, expanded, ghost_list):
     # initialize variables
     # note: the grid indexes start from 1
     rows, cols = len(grid), len(grid[0])
 
-    # tracer[][] is used for tracing back the path
-    # tracer[x][y] = parent of (x, y)
-    tracer = [[(-1, -1) for _ in range(cols + 1)] for _ in range(rows + 1)]
+    # directions = [left, right, up, down]
+    directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+
+    # trace[][] is used for tracing back the path
+    # trace[x][y] = parent of (x, y)
+    trace = [[(-1, -1) for _ in range(cols + 1)] for _ in range(rows + 1)]
     found = False
     
     # a frontier using FIFO (queue)
@@ -45,24 +47,25 @@ def bfs(grid, start, goal, expanded):
     # reached nodes = expanded nodes + nodes in the frontier
     reached = set()
     reached.add(start)
-
+        
     # main process
     while (q and (not found)):
         u = q.popleft()
 
+        # expanded is used for analysis
         expanded.add(u)
 
-        for dx, dy in DIRECTIONS:
+        for dx, dy in directions:
             # node v is a neighbor of node u
             v = (u[0] + dx, u[1] + dy)
 
-            # skip invalid moves
+            # skip in valid moves
             if (v[0] < 1 or v[0] > rows):   continue
             if (v[1] < 1 or v[1] > cols):   continue
             if (grid[v[0]][v[1]] > -1):     continue
             if (v in reached):              continue
 
-            tracer[v[0]][v[1]] = u
+            trace[v[0]][v[1]] = u
             
             # early stopping
             if (v == goal):
@@ -74,18 +77,22 @@ def bfs(grid, start, goal, expanded):
 
     # tracing back the path
     if (found == True):
-        return tracePath(tracer, start, goal)
-
+        return tracePath(trace, start, goal)
+    
     return None
+
 
 def ucs(grid, start, goal, expanded, ghost_list):
     # initialize variables
     # note: the grid indexes start from 1
     rows, cols = len(grid), len(grid[0])
 
-    # tracer[][] is used for tracing back the path
-    # tracer[x][y] = parent of (x, y)
-    tracer = [[(-1, -1) for _ in range(cols + 1)] for _ in range(rows + 1)]
+    # directions = [left, right, up, down]
+    directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+
+    # trace[][] is used for tracing back the path
+    # trace[x][y] = parent of (x, y)
+    trace = [[(-1, -1) for _ in range(cols + 1)] for _ in range(rows + 1)]
     found = False
 
     # d[x][y] = min distance from start to (x, y)
@@ -111,7 +118,7 @@ def ucs(grid, start, goal, expanded, ghost_list):
             found = True
             break
 
-        for dx, dy in DIRECTIONS:
+        for dx, dy in directions:
             # node v is a neighbor of node u
             # distance between u and v is always 1
             v = (u[0] + dx, u[1] + dy)
@@ -125,21 +132,111 @@ def ucs(grid, start, goal, expanded, ghost_list):
 
             if (d[v[0]][v[1]] > d[u[0]][u[1]] + uv):
                 d[v[0]][v[1]] = d[u[0]][u[1]] + uv
-                tracer[v[0]][v[1]] = u
+                trace[v[0]][v[1]] = u
                 reached.add(v)
                 heapq.heappush(q, (d[v[0]][v[1]], v))
 
     # tracing back the path
     if (found == True):
-        return tracePath(tracer, start, goal)
+        return tracePath(trace, start, goal)
     
     return None
 
 
+# def findCycle(trace, u, v):
+#     while (u != (-1, -1)):
+#         u = trace[u[0]][u[1]]
+#         if (u == v):
+#             return True
+#     return False
+
+# def dls(grid, start, goal, expanded, ghost_list, limit, direction_vector):
+#     # initialize variables
+#     rows, cols = len(grid), len(grid[0])
+
+#     # used for calculating and limiting the DFS depth
+#     depth = [[0 for i in range(0, cols + 1)] for j in range(0, rows + 1)]
+
+#     # used for tracing back the path
+#     prev_vector = [[(0, 0) for i in range(0, cols + 1)] for j in range(0, rows + 1)]
+#     prev_vector[start[0]][start[1]] = direction_vector
+
+#     # used for tracing back the path
+#     trace = [[(-1, -1) for i in range(0, cols + 1)] for j in range(0, rows + 1)]
+#     found = False
+    
+#     # have a list act as a stack
+#     s = []
+#     s.append(start)
+#     depth[start[0]][start[1]] = 0
+
+#     # main process
+#     while (s and (not found)):
+#         u = s.pop()
+
+#         # used for analysis
+#         expanded.add(u)
+
+#          # directions = [left, right, up, down]
+#         directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+#         old_direction = prev_vector[u[0]][u[1]]
+#         directions.remove((-old_direction[0], -old_direction[1]))
+
+
+#         if (depth[u[0]][u[1]] == limit):
+#             continue
+
+#         for di, dj in directions:
+#             v = (u[0] + di, u[1] + dj)
+
+#             # skip invalid moves
+#             if (v[0] < 1 or v[0] > rows):   continue
+#             if (v[1] < 1 or v[1] > cols):   continue
+#             if (grid[v[0]][v[1]] != -1):    continue
+#             if (findCycle(trace, u, v)):    continue
+
+#             trace[v[0]][v[1]] = u
+#             prev_vector[v[0]][v[1]] = (di, dj)
+#             # early stopping
+#             if (v == goal):
+#                 found = True
+#                 break
+
+#             s.append(v)
+#             depth[v[0]][v[1]] = depth[u[0]][u[1]] + 1
+
+#     if (found == False):
+#         return None
+    
+#     # tracing back the path
+#     u = goal
+#     path = [goal]
+#     while (u != start):
+#         u = trace[u[0]][u[1]]
+#         path.append(u)
+
+#     path.reverse()
+#     return path
+
+# def ids(grid, start, goal, expanded, ghost_list, self_direction):
+#     rows, cols = len(grid), len(grid[0])
+#     direction_vector = directionToVector(self_direction)
+#     for depth in range(rows * cols):
+#         path = dls(grid, start, goal, expanded, ghost_list, depth, direction_vector)
+#         if (path is not None):
+#             return path
+    
+#     return None
+
+
+# dls using backtrack (written by Phu Le)
 def dlsBacktrack(grid, u, goal, path, expanded, l):
     # initialize variables
     # note: the grid indexes start from 1
     rows, cols = len(grid), len(grid[0])
+
+    # directions = [left, right, up, down]
+    directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
 
     # expanded is used for analysis
     expanded.add(u)
@@ -150,13 +247,13 @@ def dlsBacktrack(grid, u, goal, path, expanded, l):
     if (len(path) >= l):
         return
     
-    for dx, dy in DIRECTIONS:
+    for dx, dy in directions:
         # node v is a neighbor of node u
         v = (u[0] + dx, u[1] + dy)
 
         # skip invalid moves
         if (v[0] < 1 or v[0] > rows):   continue
-        if (v[1] < 1 or v[1] > cols):   continue
+        if (v[1] < 1 or v[1] > cols):   continue    
         if (grid[v[0]][v[1]] > -1):     continue
         if (v in path):                 continue
 
@@ -174,10 +271,11 @@ def dlsBacktrack(grid, u, goal, path, expanded, l):
         path.pop()
 
 
-def ids(grid, start, goal, expanded, ghost_list):
+# written by Phu Le
+def ids(grid, start, goal, expanded):
     rows, cols = len(grid), len(grid[0])
 
-    for depth in range(heuristic(start, goal), rows * cols):
+    for depth in range(1, rows * cols):
         path = [start]
         dlsBacktrack(grid, start, goal, path, expanded, depth)
 
@@ -193,10 +291,13 @@ def heuristic(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1]) # Manhattan = |dx| + |dy|
 
 
-def aStar(grid, start, goal, expanded, ghost_list):
+def aStar(grid, start, goal, expanded):
     # initialize variables
     # note: the grid indexes start from 1
     rows, cols = len(grid), len(grid[0])
+
+    # directions = [left, right, up, down]
+    directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
 
     # having a list act as an heap priority queue
     open_list = []
@@ -216,7 +317,7 @@ def aStar(grid, start, goal, expanded, ghost_list):
             return path
         
         i, j = expanding_node
-        for di, dj in DIRECTIONS:
+        for di, dj in directions:
             ni, nj = i + di, j + dj
             neighbor = (ni, nj)
 
@@ -243,3 +344,13 @@ def identifyDirection(path):
     }
     
     return switcher.get(direction, "Invalid")  # Default case 
+
+
+# def directionToVector(direction):
+#     switcher = {
+#         "LEFT":(0, -1),
+#         "RIGHT":(0, 1),
+#         "UP":(-1, 0),
+#         "DOWN":(1, 0)
+#     }
+#     return switcher.get(direction, "Invalid")  # Default case 

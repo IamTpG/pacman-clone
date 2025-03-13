@@ -424,9 +424,8 @@ class UCSGhost(Ghost):
         tracemalloc.stop()
         time_end = time.time()
 
-                # Orange
-        Coloring = ANSI.background(0) + ANSI.color_text(33) + ANSI.style_text(1)
-
+        # Orange
+        Coloring = ANSI.background(0) + ANSI.color_text(91) + ANSI.style_text(33)
         
         print(Coloring + "\n================= UCS =================")
         print(Coloring + f"Start = {(self.y, self.x)}")

@@ -27,7 +27,7 @@ def tracePath(trace, start, goal):
     return path
 
 
-def bfs(grid, start, goal, expanded, ghost_list):
+def bfs(grid, start, goal, expanded):
     # initialize variables
     # note: the grid indexes start from 1
     rows, cols = len(grid), len(grid[0])
@@ -82,7 +82,7 @@ def bfs(grid, start, goal, expanded, ghost_list):
     return None
 
 
-def ucs(grid, start, goal, expanded, ghost_list):
+def ucs(grid, start, goal, expanded):
     # initialize variables
     # note: the grid indexes start from 1
     rows, cols = len(grid), len(grid[0])

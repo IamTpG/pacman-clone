@@ -418,7 +418,7 @@ class UCSGhost(Ghost):
 
         # expanded is used for analysis
         expanded = set()
-        path = Pfinder.ucs(tile_map, (self.y, self.x), target, expanded, ghost_list) 
+        path = Pfinder.ucs(tile_map, (self.y, self.x), target, expanded) 
 
         _, memory_peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()

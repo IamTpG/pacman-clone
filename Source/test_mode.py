@@ -68,7 +68,7 @@ selected_ghost = None
 
 # update region
 update_region2 = pygame.Rect(SCREEN_OFFSET * 50, SCREEN_OFFSET * 40, SCREEN_WIDTH, SCREEN_HEIGHT)
-last_sprite_position = (0, 0, 0, 0)
+
 
 # test mode loop
 def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_list, update_region):
@@ -90,7 +90,7 @@ def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_l
         4 : [(24, 19), (5, 19), (5, 19), (5, 19), (5, 19)], # tunnel left to right
         5 : [(15, 34), (15, 19), (15, 19), (15, 19), (15, 19)] # ghost house to bottom middle
     }
-
+    last_sprite_position = (0, 0, 0, 0)
     while(True):
         if(setup):
             clear_map, update_ghosts = TMap.setupTestScreen(screen, pacman, ghosts_list, tilemap, clear_map, update_ghosts, update_region, preset, preset_positions)

@@ -4,6 +4,8 @@ if __name__ == '__main__':
 
 import pygame
 import random
+import time
+import tracemalloc
 
 # local
 import tile_map as TMap
@@ -31,6 +33,17 @@ opposite_direction = {
     "LEFT": "RIGHT",
     "RIGHT": "LEFT"
 }
+
+# Used for coloring text
+class ANSI():
+    def background(code):
+        return "\33[{code}m".format(code=code)
+ 
+    def style_text(code):
+        return "\33[{code}m".format(code=code)
+ 
+    def color_text(code):
+        return "\33[{code}m".format(code=code)
 
 # load common ghost frames
 scared = pygame.image.load("Resource\\ghosts\\scared.png")
@@ -297,29 +310,6 @@ class Ghost:
         else:
             screen.blit(self.frames[direction_mapping[self.direction]], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
 
-class AStarGhost(Ghost):
-    def __init__(self, starting_position, direction, name):
-        super().__init__(starting_position, direction, name)
-
-    def getDirection(self, tile_map, pacman, ghost_list): 
-        target = (0, 0)
-        if (self.state == "SCATTER" or self.state == "SCARED"):
-            self.path_found = []
-            return super().getRandomDirection(tile_map)
-        elif (self.state == "DEAD"):
-            target = (19, 15) # return to ghost house
-        else:
-            target = (pacman.y, pacman.x)
-
-        expanded = set()
-        path = Pfinder.aStar(tile_map, (self.y, self.x), target, expanded, ghost_list) 
-
-        if (path is None or len(path) <= 1):
-            # keep moving foward if no path was found
-            return self.direction
-        
-        direction = Pfinder.identifyDirection(path)
-        return direction
 
 class BFSGhost(Ghost): 
     def __init__(self, starting_position, direction, name):
@@ -335,9 +325,26 @@ class BFSGhost(Ghost):
         else:
             target = (pacman.y, pacman.x)
 
-        # expanded is used for analysis
+        time_start = time.time()
+        tracemalloc.start()
+
+        # expanded nodes = nodes being used to generate successor nodes
         expanded = set()
-        path = Pfinder.bfs(tile_map, (self.y, self.x), target, expanded, ghost_list) 
+        path = Pfinder.bfs(tile_map, (self.y, self.x), target, expanded)
+
+        _, memory_peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        time_end = time.time()
+
+        # Blue
+        Coloring = ANSI.background(0) + ANSI.color_text(91) + ANSI.style_text(34)
+
+        print(Coloring + "\n================= BFS =================")
+        print(Coloring + f"Start = {(self.y, self.x)}")
+        print(Coloring + f"Goal  = {target}")
+        print(Coloring + f"Time usage:        {(time_end - time_start) * 1000:.2f} ms")
+        print(Coloring + f"Peak memory usage: {memory_peak} bytes")
+        print(Coloring + f"Expanded nodes:    {len(expanded)}")
 
         if (path is None or len(path) <= 1):
             # keep moving foward if no path was found
@@ -346,31 +353,7 @@ class BFSGhost(Ghost):
         direction = Pfinder.identifyDirection(path)
         return direction
 
-class UCSGhost(Ghost):
-    def __init__(self, starting_position, direction, name):
-        super().__init__(starting_position, direction, name)
-    
-    def getDirection(self, tile_map, pacman, ghost_list):  
-        target = (0, 0)
 
-        if (self.state == "SCATTER" or self.state == "SCARED"):
-            return super().getRandomDirection(tile_map)
-        elif (self.state == "DEAD"):
-            target = (19, 15) # return to ghost house
-        else:
-            target = (pacman.y, pacman.x)
-
-        # expanded is used for analysis
-        expanded = set()
-        path = Pfinder.ucs(tile_map, (self.y, self.x), target, expanded, ghost_list) 
-
-        if (path is None or len(path) <= 1):
-            # keep moving foward if no path was found
-            return self.direction
-        
-        direction = Pfinder.identifyDirection(path)
-        return direction
-    
 class IDSGhost(Ghost):
     def __init__(self, starting_position, direction, name):
         super().__init__(starting_position, direction, name)
@@ -386,9 +369,119 @@ class IDSGhost(Ghost):
         else:
             target = (pacman.y, pacman.x)
 
+        time_start = time.time()
+        tracemalloc.start()
+
+        # expanded is used for analysis
+        # expanded nodes = nodes being used to generate successor nodes
+        expanded = set()
+        path = Pfinder.ids(tile_map, (self.y, self.x), target, expanded)  
+
+        _, memory_peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        time_end = time.time()
+
+        # Pink
+        Coloring = ANSI.background(0) + ANSI.color_text(91) + ANSI.style_text(35)
+
+        print(Coloring + "\n================= IDS =================")
+        print(Coloring + f"Start = {(self.y, self.x)}")
+        print(Coloring + f"Goal  = {target}")
+        print(Coloring + f"Time usage:        {(time_end - time_start) * 1000:.2f} ms")
+        print(Coloring + f"Peak memory usage: {memory_peak} bytes")
+        print(Coloring + f"Expanded nodes:    {len(expanded)}")
+
+        if (path is None or len(path) <= 1):
+            # keep moving foward if no path was found
+            return self.direction
+        
+        direction = Pfinder.identifyDirection(path)
+        return direction
+    
+
+class UCSGhost(Ghost):
+    def __init__(self, starting_position, direction, name):
+        super().__init__(starting_position, direction, name)
+    
+    def getDirection(self, tile_map, pacman, ghost_list):  
+        target = (0, 0)
+
+        if (self.state == "SCATTER" or self.state == "SCARED"):
+            return super().getRandomDirection(tile_map)
+        elif (self.state == "DEAD"):
+            target = (19, 15) # return to ghost house
+        else:
+            target = (pacman.y, pacman.x)
+
+        time_start = time.time()
+        tracemalloc.start()
+
         # expanded is used for analysis
         expanded = set()
-        path = Pfinder.ids(tile_map, (self.y, self.x), target, expanded, ghost_list)   
+        path = Pfinder.ucs(tile_map, (self.y, self.x), target, expanded, ghost_list) 
+
+        _, memory_peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        time_end = time.time()
+
+        # Orange
+        #print("\033[93m", "\n================= UCS =================", "\033[m")
+        #print("\033[93m", f"Start = {(self.y, self.x, "\033[m")}", "\033[m")
+        #print("\033[93m", f"Goal  = {target}", "\033[m")
+        #print("\033[93m", f"Time usage:        {(time_end - time_start) * 1000:.5f} ms", "\033[m")
+        #print("\033[93m", f"Peak memory usage: {memory_peak} bytes", "\033[m")
+        #print("\033[93m", f"Expanded nodes:    {len(expanded)}", "\033[m")
+
+                # Orange
+        print("\033[93m", "\n================= UCS =================", "\033[0m")
+        print("\033[93m", f"Start = ({self.y}, {self.x})", "\033[0m")
+        print("\033[93m", f"Goal = {target}", "\033[0m")
+        print("\033[93m", f"Time usage: {(time_end - time_start) * 1000:.5f} ms", "\033[0m")
+        print("\033[93m", f"Peak memory usage: {memory_peak} bytes", "\033[0m")
+        print("\033[93m", f"Expanded nodes: {len(expanded)}", "\033[0m")
+
+        if (path is None or len(path) <= 1):
+            # keep moving foward if no path was found
+            return self.direction
+        
+        direction = Pfinder.identifyDirection(path)
+        return direction
+
+
+class AStarGhost(Ghost):
+    def __init__(self, starting_position, direction, name):
+        super().__init__(starting_position, direction, name)
+
+    def getDirection(self, tile_map, pacman,ghost_list): 
+        target = (0, 0)
+        if (self.state == "SCATTER" or self.state == "SCARED"):
+            self.path_found = []
+            return super().getRandomDirection(tile_map)
+        elif (self.state == "DEAD"):
+            target = (19, 15) # return to ghost house
+        else:
+            target = (pacman.y, pacman.x)
+
+        time_start = time.time()
+        tracemalloc.start()
+
+        # expanded nodes = nodes being used to generate successor nodes
+        expanded = set()
+        path = Pfinder.aStar(tile_map, (self.y, self.x), target, expanded) 
+
+        _, memory_peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        time_end = time.time()
+
+        # Red
+        Coloring = ANSI.background(0) + ANSI.color_text(91) + ANSI.style_text(31)
+
+        print(Coloring + "\n================= A* =================")
+        print(Coloring + f"Start = {(self.y, self.x)}")
+        print(Coloring + f"Goal  = {target}")
+        print(Coloring + f"Time usage:        {(time_end - time_start) * 1000:.2f} ms")
+        print(Coloring + f"Peak memory usage: {memory_peak} bytes")
+        print(Coloring + f"Expanded nodes:    {len(expanded)}")
 
         if (path is None or len(path) <= 1):
             # keep moving foward if no path was found

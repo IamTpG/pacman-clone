@@ -174,7 +174,7 @@ def dlsBacktrack(grid, u, goal, path, expanded, l):
         path.pop()
 
 
-def ids(grid, start, goal, expanded, ghost_list):
+def ids(grid, start, goal, expanded):
     rows, cols = len(grid), len(grid[0])
 
     for depth in range(heuristic(start, goal), rows * cols):
@@ -193,7 +193,7 @@ def heuristic(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1]) # Manhattan = |dx| + |dy|
 
 
-def aStar(grid, start, goal, expanded, ghost_list):
+def aStar(grid, start, goal, expanded):
     # initialize variables
     # note: the grid indexes start from 1
     rows, cols = len(grid), len(grid[0])

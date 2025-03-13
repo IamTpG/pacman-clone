@@ -221,7 +221,6 @@ class Pacman:
 
         # turn pacman if possible
         if(self.canTurn(tile_map, self.queue_turn) == True):
-            self.snapDisplayToGrid()
             self.direction = self.queue_turn
             self.queue_turn = "NONE"
             self.lock_turn_time = 1
@@ -238,21 +237,19 @@ class Pacman:
             "RIGHT": (self.speed, 0, 1, 0)  
         }
 
-        print("display x: ", self.display_x, " | display y: ", self.display_y)
-
         # update position
         if (self.direction in update_direction):
             self.display_x += update_direction[self.direction][0]
             self.display_y += update_direction[self.direction][1]
             
             if(self.direction == "UP" or self.direction == "DOWN"):
-                if(self.display_y % TILE_SIZE == VERTICAL_OFFSET):
+                if(self.display_y % TILE_SIZE == VERTICAL_OFFSET and self.display_y // TILE_SIZE != self.y):
                     self.x += update_direction[self.direction][2]
                     self.y += update_direction[self.direction][3]
                     self.queue_time -= 1
                     if(self.lock_turn_time > 0): self.lock_turn_time -= 1
             if(self.direction == "LEFT" or self.direction == "RIGHT"):
-                if(self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
+                if(self.display_x % TILE_SIZE == HORIZONTAL_OFFSET and self.display_x // TILE_SIZE != self.x):
                     self.x += update_direction[self.direction][2]
                     self.y += update_direction[self.direction][3]
                     self.queue_time -= 1

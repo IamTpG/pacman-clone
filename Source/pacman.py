@@ -21,7 +21,11 @@ PACMAN_RADIUS = TMap.PACMAN_RADIUS
 
 PACMAN_SPEED = TMap.PACMAN_SPEED
 GHOST_SPEED = TMap.GHOST_SPEED
-SCALING_FACTOR = 2.3
+SCALING_FACTOR = 2.4
+
+# determining the relationship between logical X,Y and display X,Y
+VERTICAL_OFFSET = 2
+HORIZONTAL_OFFSET = 2
 
 opposite_direction = {
     "UP": "DOWN",
@@ -100,11 +104,11 @@ class Pacman:
         # display
         self.radius = PACMAN_RADIUS
         self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - self.radius + 3
-        self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - self.radius + 4
+        self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - self.radius + 3
     
     def snapDisplayToGrid(self):
         self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - self.radius + 3
-        self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - self.radius + 4
+        self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - self.radius + 3
 
     def resetPosition(self, starting_position, direction):
         self.x = starting_position[0]
@@ -224,10 +228,8 @@ class Pacman:
 
         if (self.checkObstructionDirection(tile_map, self.direction)):
             self.queue_turn = "NONE"
+            self.snapDisplayToGrid()
             return
-
-        VERTICAL_OFFSET = 3
-        HORIZONTAL_OFFSET = 2
         
         update_direction = {
             "UP": (0, -self.speed, 0, -1),
@@ -235,6 +237,8 @@ class Pacman:
             "LEFT": (-self.speed, 0, -1, 0),
             "RIGHT": (self.speed, 0, 1, 0)  
         }
+
+        print("display x: ", self.display_x, " | display y: ", self.display_y)
 
         # update position
         if (self.direction in update_direction):

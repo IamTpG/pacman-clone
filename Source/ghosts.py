@@ -90,11 +90,11 @@ class Ghost:
         # display
         self.radius = GHOST_RADIUS
         self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - self.radius + 3
-        self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - self.radius + 4 
+        self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - self.radius + 3 
     
     def snapDisplayToGrid(self):
         self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - self.radius + 3
-        self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - self.radius + 4
+        self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - self.radius + 3
 
     def freeze(self):
         self.speed = 0
@@ -146,7 +146,8 @@ class Ghost:
 
     import random
 
-    def preventGhostOverlap(self, ghost_list):
+    def preventGhostOverlap(self, ghost_list): 
+    
         COLLISION_RADIUS = self.radius * 1.5
         if(self.cooldown_timer > 0):
             self.cooldown_timer -= 1
@@ -223,7 +224,7 @@ class Ghost:
                 if (self.direction == "RIGHT"): self.display_x += 1
                 if (self.direction == "LEFT"):  self.display_x -= 1
             
-        VERTICAL_OFFSET = 3
+        VERTICAL_OFFSET = 2
         HORIZONTAL_OFFSET = 2
 
         if (self.direction in update_direction):

@@ -234,7 +234,16 @@ def setupTestScreen(screen, pacman, ghosts_list, tilemap, clear_map, update_ghos
     update_ghosts[2] = False
     update_ghosts[3] = False
 
+    preset_direction = {
+        1: "DOWN",
+        2: "UP",
+        3: "DOWN",
+        4: "UP",
+        5: "UP"
+    }
+
     for g in ghosts_list:
+        g.direction = preset_direction[preset]
         g.MAX_SCATTER_TIME = 0
         g.scatter_time = 0
         g.MAX_CHASE_TIME = 10000

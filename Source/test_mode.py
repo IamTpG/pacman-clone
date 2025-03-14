@@ -96,8 +96,6 @@ def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_l
     while(True):
         if(setup):
             clear_map, update_ghosts = TMap.setupTestScreen(screen, pacman, ghosts_list, tilemap, clear_map, update_ghosts, update_region, preset, preset_positions)
-            for ghost in ghosts_list:
-                ghost.direction = "UP"
             setup = False
 
         for event in pygame.event.get():

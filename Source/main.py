@@ -171,6 +171,7 @@ while (running):
                 if (debug_input_queue == key_order_dm and not enable_debug):
                     print("DEBUG MODE ENABLED")
                     enable_debug = True    
+                    standard_mode = False
 
                 #check for test mode entry
                 if (event.type == pygame.KEYDOWN and not enable_test):
@@ -180,6 +181,7 @@ while (running):
                 if (test_input_queue == key_order_tm and not enable_test):
                     print("TEST MODE ENABLED")
                     enable_test = True
+                    standard_mode = False
 
                 #check for invincibility mode entry
                 if (event.type == pygame.KEYDOWN and not enable_invincibility):

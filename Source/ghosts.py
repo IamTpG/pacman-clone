@@ -52,7 +52,7 @@ deadUP = pygame.image.load("Resource\\ghosts\\deadUp.png")
 deadDOWN = pygame.image.load("Resource\\ghosts\\deadDown.png")
 deadLEFT = pygame.image.load("Resource\\ghosts\\deadLeft.png")
 deadRIGHT = pygame.image.load("Resource\\ghosts\\deadRight.png")
-extra_frames = [scared, scared2, deadUP, deadDOWN, deadLEFT, deadRIGHT]
+extra_frames = [scared, scared2, deadDOWN, deadUP, deadLEFT, deadRIGHT]
 
 def loadGhostFrames(name):
     ghost_frames = [None for _ in range(10)]
@@ -91,7 +91,7 @@ class Ghost:
 
         # lock turning
         self.lock_turn_time = 0
-        self.cooldown_timer = 0
+        self.collision_timer = 0
         self.collision_count = 0
 
         # movement
@@ -160,36 +160,31 @@ class Ghost:
     import random
 
     def preventGhostOverlap(self, ghost_list): 
-    
-        COLLISION_RADIUS = self.radius * 1.5
-        if(self.cooldown_timer > 0):
-            self.cooldown_timer -= 1
-            return
+        COLLISION_RADIUS = 1.5 * self.radius
+        if(self.collision_timer > 0):
+                self.collision_timer -= 1
+                return
 
         collision_detected = False
+        for ghost in ghost_list:
+            if(self == ghost): continue
+            if(self.state == "DEAD" or ghost.state == "DEAD"): continue
 
-        for i in range(len(ghost_list)):
-            if (self == ghost_list[i]): continue
-            if (self.state == "DEAD" or ghost_list[i].state == "DEAD"): continue
-
-            if (abs(self.display_x - ghost_list[i].display_x) < COLLISION_RADIUS and 
-                abs(self.display_y - ghost_list[i].display_y) < COLLISION_RADIUS):
+            if(abs(self.display_x - ghost.display_x) < COLLISION_RADIUS and abs(self.display_y - ghost.display_y) < COLLISION_RADIUS):
                 self.direction = opposite_direction[self.direction]
+                self.collision_timer = 25
                 self.collision_count += 1
-                self.snapDisplayToGrid()
-                self.cooldown_timer = 5
                 collision_detected = True
+                break
 
-        if (not collision_detected):
+        if(not collision_detected): 
             self.collision_count = 0
-            
-        if (self.collision_count > 5): # if 2 ghosts are stuck inside each other, teleport it to the ghost house
-            self.x = random.choice([13, 15, 17])
-            self.y = 19
-            self.collision_count = 0
-            self.snapDisplayToGrid()
 
-    
+        if(self.collision_count > 5):
+            self.x, self.x = random.choice([(13, 19), (15, 19), (17, 19)])
+            self.collision_count = 0
+            self.collision_timer = 0
+
     def canTurn(self, tile_map):
         if (self.direction == "NONE"):
             return False
@@ -206,17 +201,17 @@ class Ghost:
     def update(self, tile_map, pacman, ghost_list, enable_test):
         if (self.state == "FROZEN"):
             return
-        
+
         if(not enable_test): self.preventGhostOverlap(ghost_list)
 
         if (self.canTurn(tile_map) == True and self.lock_turn_time == 0):
-            self.direction = self.getDirection(tile_map, pacman, ghost_list)
+            self.direction = self.getDirection(tile_map, pacman, enable_test)
             if(self.state != "CHASE"): self.lock_turn_time = 2
             else:   self.lock_turn_time = 1
 
         if (self.checkObstructionDirection(tile_map, self.direction)):
             self.snapDisplayToGrid()
-            self.direction = self.getDirection(tile_map, pacman, ghost_list)
+            self.direction = self.getDirection(tile_map, pacman, enable_test)
         
         update_direction = {
             "UP":    (0, -self.speed, 0, -1),
@@ -245,13 +240,13 @@ class Ghost:
             self.display_y += update_direction[self.direction][1]
             
             if (self.direction == "UP" or self.direction == "DOWN"):
-                if (self.display_y % TILE_SIZE == VERTICAL_OFFSET):
+                if (self.display_y % TILE_SIZE == VERTICAL_OFFSET and self.display_y // TILE_SIZE != self.y):
                     self.x += update_direction[self.direction][2]
                     self.y += update_direction[self.direction][3]
                     if self.lock_turn_time > 0: self.lock_turn_time -= 1
-
+                    
             if (self.direction == "LEFT" or self.direction == "RIGHT"):
-                if (self.display_x % TILE_SIZE == HORIZONTAL_OFFSET):
+                if (self.display_x % TILE_SIZE == HORIZONTAL_OFFSET and self.display_x // TILE_SIZE != self.x):
                     self.x += update_direction[self.direction][2]
                     self.y += update_direction[self.direction][3]
                     if self.lock_turn_time > 0: self.lock_turn_time -= 1
@@ -315,7 +310,7 @@ class BFSGhost(Ghost):
     def __init__(self, starting_position, direction, name):
         super().__init__(starting_position, direction, name)
     
-    def getDirection(self, tile_map, pacman, ghost_list):  
+    def getDirection(self, tile_map, pacman, enable_test):  
         target = (0, 0)
 
         if (self.state == "SCATTER" or self.state == "SCARED"):
@@ -332,19 +327,20 @@ class BFSGhost(Ghost):
         expanded = set()
         path = Pfinder.bfs(tile_map, (self.y, self.x), target, expanded)
 
-        _, memory_peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop()
-        time_end = time.time()
+        if(enable_test):
+            _, memory_peak = tracemalloc.get_traced_memory()
+            tracemalloc.stop()
+            time_end = time.time()
 
-        # Blue
-        Coloring = ANSI.background(0) + ANSI.color_text(91) + ANSI.style_text(34)
+            # Blue
+            Coloring = ANSI.background(0) + ANSI.color_text(91) + ANSI.style_text(34)
 
-        print(Coloring + "\n================= BFS =================")
-        print(Coloring + f"Start = {(self.y, self.x)}")
-        print(Coloring + f"Goal  = {target}")
-        print(Coloring + f"Time usage:        {(time_end - time_start) * 1000:.2f} ms")
-        print(Coloring + f"Peak memory usage: {memory_peak} bytes")
-        print(Coloring + f"Expanded nodes:    {len(expanded)}")
+            print(Coloring + "\n================= BFS =================")
+            print(Coloring + f"Start = {(self.y, self.x)}")
+            print(Coloring + f"Goal  = {target}")
+            print(Coloring + f"Time usage:        {(time_end - time_start) * 1000:.2f} ms")
+            print(Coloring + f"Peak memory usage: {memory_peak} bytes")
+            print(Coloring + f"Expanded nodes:    {len(expanded)}")
 
         if (path is None or len(path) <= 1):
             # keep moving foward if no path was found
@@ -353,13 +349,12 @@ class BFSGhost(Ghost):
         direction = Pfinder.identifyDirection(path)
         return direction
 
-
 class IDSGhost(Ghost):
     def __init__(self, starting_position, direction, name):
         super().__init__(starting_position, direction, name)
     
     # override with specific behavior
-    def getDirection(self, tile_map, pacman, ghost_list):  
+    def getDirection(self, tile_map, pacman, enable_test):  
         target = (0, 0)
 
         if ((self.y, self.x) in Pfinder.HOUSE or self.state == "SCATTER" or self.state == "SCARED"):
@@ -377,19 +372,20 @@ class IDSGhost(Ghost):
         expanded = set()
         path = Pfinder.ids(tile_map, (self.y, self.x), target, expanded)  
 
-        _, memory_peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop()
-        time_end = time.time()
+        if(enable_test):
+            _, memory_peak = tracemalloc.get_traced_memory()
+            tracemalloc.stop()
+            time_end = time.time()
 
-        # Pink
-        Coloring = ANSI.background(0) + ANSI.color_text(91) + ANSI.style_text(35)
+            # Pink
+            Coloring = ANSI.background(0) + ANSI.color_text(91) + ANSI.style_text(35)
 
-        print(Coloring + "\n================= IDS =================")
-        print(Coloring + f"Start = {(self.y, self.x)}")
-        print(Coloring + f"Goal  = {target}")
-        print(Coloring + f"Time usage:        {(time_end - time_start) * 1000:.2f} ms")
-        print(Coloring + f"Peak memory usage: {memory_peak} bytes")
-        print(Coloring + f"Expanded nodes:    {len(expanded)}")
+            print(Coloring + "\n================= IDS =================")
+            print(Coloring + f"Start = {(self.y, self.x)}")
+            print(Coloring + f"Goal  = {target}")
+            print(Coloring + f"Time usage:        {(time_end - time_start) * 1000:.2f} ms")
+            print(Coloring + f"Peak memory usage: {memory_peak} bytes")
+            print(Coloring + f"Expanded nodes:    {len(expanded)}")
 
         if (path is None or len(path) <= 1):
             # keep moving foward if no path was found
@@ -398,12 +394,11 @@ class IDSGhost(Ghost):
         direction = Pfinder.identifyDirection(path)
         return direction
     
-
 class UCSGhost(Ghost):
     def __init__(self, starting_position, direction, name):
         super().__init__(starting_position, direction, name)
     
-    def getDirection(self, tile_map, pacman, ghost_list):  
+    def getDirection(self, tile_map, pacman, enable_test):  
         target = (0, 0)
 
         if (self.state == "SCATTER" or self.state == "SCARED"):
@@ -420,19 +415,20 @@ class UCSGhost(Ghost):
         expanded = set()
         path = Pfinder.ucs(tile_map, (self.y, self.x), target, expanded) 
 
-        _, memory_peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop()
-        time_end = time.time()
+        if(enable_test):
+            _, memory_peak = tracemalloc.get_traced_memory()
+            tracemalloc.stop()
+            time_end = time.time()
 
-        # Orange
-        Coloring = ANSI.background(0) + ANSI.color_text(91) + ANSI.style_text(33)
-        
-        print(Coloring + "\n================= UCS =================")
-        print(Coloring + f"Start = {(self.y, self.x)}")
-        print(Coloring + f"Goal  = {target}")
-        print(Coloring + f"Time usage:        {(time_end - time_start) * 1000:.2f} ms")
-        print(Coloring + f"Peak memory usage: {memory_peak} bytes")
-        print(Coloring + f"Expanded nodes:    {len(expanded)}")
+            # Orange
+            Coloring = ANSI.background(0) + ANSI.color_text(91) + ANSI.style_text(33)
+            
+            print(Coloring + "\n================= UCS =================")
+            print(Coloring + f"Start = {(self.y, self.x)}")
+            print(Coloring + f"Goal  = {target}")
+            print(Coloring + f"Time usage:        {(time_end - time_start) * 1000:.2f} ms")
+            print(Coloring + f"Peak memory usage: {memory_peak} bytes")
+            print(Coloring + f"Expanded nodes:    {len(expanded)}")
 
         if (path is None or len(path) <= 1):
             # keep moving foward if no path was found
@@ -441,12 +437,11 @@ class UCSGhost(Ghost):
         direction = Pfinder.identifyDirection(path)
         return direction
 
-
 class AStarGhost(Ghost):
     def __init__(self, starting_position, direction, name):
         super().__init__(starting_position, direction, name)
 
-    def getDirection(self, tile_map, pacman,ghost_list): 
+    def getDirection(self, tile_map, pacman, enable_test): 
         target = (0, 0)
         if (self.state == "SCATTER" or self.state == "SCARED"):
             self.path_found = []
@@ -463,19 +458,20 @@ class AStarGhost(Ghost):
         expanded = set()
         path = Pfinder.aStar(tile_map, (self.y, self.x), target, expanded) 
 
-        _, memory_peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop()
-        time_end = time.time()
+        if(enable_test):
+            _, memory_peak = tracemalloc.get_traced_memory()
+            tracemalloc.stop()
+            time_end = time.time()
 
-        # Red
-        Coloring = ANSI.background(0) + ANSI.color_text(91) + ANSI.style_text(31)
+            # Red
+            Coloring = ANSI.background(0) + ANSI.color_text(91) + ANSI.style_text(31)
 
-        print(Coloring + "\n================= A* =================")
-        print(Coloring + f"Start = {(self.y, self.x)}")
-        print(Coloring + f"Goal  = {target}")
-        print(Coloring + f"Time usage:        {(time_end - time_start) * 1000:.2f} ms")
-        print(Coloring + f"Peak memory usage: {memory_peak} bytes")
-        print(Coloring + f"Expanded nodes:    {len(expanded)}")
+            print(Coloring + "\n================= A* =================")
+            print(Coloring + f"Start = {(self.y, self.x)}")
+            print(Coloring + f"Goal  = {target}")
+            print(Coloring + f"Time usage:        {(time_end - time_start) * 1000:.2f} ms")
+            print(Coloring + f"Peak memory usage: {memory_peak} bytes")
+            print(Coloring + f"Expanded nodes:    {len(expanded)}")
 
         if (path is None or len(path) <= 1):
             # keep moving foward if no path was found

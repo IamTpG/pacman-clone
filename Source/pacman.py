@@ -177,10 +177,18 @@ class Pacman:
                 return True
 
     def canTurn(self, tile_map, wanted_direction):
+        TURN_THRESHOLD = self.radius
+        
+        center_cell_x = self.x * TILE_SIZE + SCREEN_OFFSET
+        center_cell_y = self.y * TILE_SIZE + SCREEN_OFFSET
+
         if wanted_direction == "NONE" or wanted_direction == self.direction:
             return False
 
-        return not self.checkObstructionDirection(tile_map, wanted_direction)
+        if(abs(self.display_x - center_cell_x) < TURN_THRESHOLD and abs(self.display_y - center_cell_y) < TURN_THRESHOLD):
+            return not self.checkObstructionDirection(tile_map, wanted_direction)
+
+        return False
 
     def eatFood(self, tile_map, ghost_list):
         if self.dead == True:
@@ -221,6 +229,8 @@ class Pacman:
 
         # turn pacman if possible
         if(self.canTurn(tile_map, self.queue_turn) == True):
+            if(self.direction != "NONE" and self.queue_turn != opposite_direction[self.direction]):
+                self.snapDisplayToGrid()
             self.direction = self.queue_turn
             self.queue_turn = "NONE"
             self.lock_turn_time = 1

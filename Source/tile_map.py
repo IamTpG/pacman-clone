@@ -183,9 +183,9 @@ def displayTestScreen(screen):
     dc4 = "A ghost will automatically stop when it reaches pacman"
 
     dc5 = "Blinky (red) uses A* pathfinding"
-    dc6 = "Inky (cyan) uses UCS pathfinding"
+    dc6 = "Inky (cyan) uses BFS pathfinding"
     dc7 = "Pinky (pink) uses DFS/IDS pathfinding"
-    dc8 = "Clyde (orange) uses BFS pathfinding"
+    dc8 = "Clyde (orange) uses UCS pathfinding"
 
     dc9 =  "            .. Ghost Controls .."
     dc10 = "                   . Mouse .         . Keyboard ."

@@ -189,12 +189,12 @@ def displayTestScreen(screen):
 
     dc9 =  "            .. Ghost Controls .."
     dc10 = "                   . Mouse .         . Keyboard ."
-    dc11 = "Selection:           [NONE]            Number 1-4"
-    dc12 = "Change Direction:    RMB               Right Click"
-    dc13 = "Move Position:       Drag LMB          W A S D"
-    dc14 = "Start Update:        LMB               Number 1-4"
+    dc11 = "Selection         :  [NONE]            Number 1-4"
+    dc12 = "Change Direction  :  RMB               Arrow Keys"
+    dc13 = "Move Position     :  Drag LMB          W A S D"
+    dc14 = "Start Update      :  LMB               Number 1-4"
     dc15 = "Reset ALL Position:  [NONE]            R"
-    dc16 = "Refresh Screen:      [NONE]            C"
+    dc16 = "Refresh Screen    :  [NONE]            C"
     dc17 = "Select Preset Test:  [NONE]            LSHIFT + Number 1-5"
 
     description = [dc0, dc1, dc2, dc3, dc4, dc5, dc6, dc7, dc8, dc9, dc10, dc11, dc12, dc13, dc14, dc15, dc16, dc17]

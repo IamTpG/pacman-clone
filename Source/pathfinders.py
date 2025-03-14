@@ -5,7 +5,7 @@ if __name__ == '__main__':
 import heapq
 from collections import deque
 
-# DIRECTIONS = [left, right, up, down]
+# [Left, Right, Up, Down]
 DIRECTIONS = [(0, -1), (0, 1), (-1, 0), (1, 0)]
 
 # Ghosts' house position
@@ -45,18 +45,19 @@ def bfs(grid, start, goal, expanded):
     # reached nodes = expanded nodes + nodes in the frontier
     reached = set()
     reached.add(start)
-
+        
     # main process
     while (q and (not found)):
         u = q.popleft()
 
+        # expanded is used for analysis
         expanded.add(u)
 
         for dx, dy in DIRECTIONS:
             # node v is a neighbor of node u
             v = (u[0] + dx, u[1] + dy)
 
-            # skip invalid moves
+            # skip in valid moves
             if (v[0] < 1 or v[0] > rows):   continue
             if (v[1] < 1 or v[1] > cols):   continue
             if (grid[v[0]][v[1]] > -1):     continue
@@ -75,10 +76,11 @@ def bfs(grid, start, goal, expanded):
     # tracing back the path
     if (found == True):
         return tracePath(tracer, start, goal)
-
+    
     return None
 
-def ucs(grid, start, goal, expanded, ghost_list):
+
+def ucs(grid, start, goal, expanded):
     # initialize variables
     # note: the grid indexes start from 1
     rows, cols = len(grid), len(grid[0])
@@ -136,6 +138,10 @@ def ucs(grid, start, goal, expanded, ghost_list):
     return None
 
 
+def manhattan(a, b):
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+
 def dlsBacktrack(grid, u, goal, path, expanded, l):
     # initialize variables
     # note: the grid indexes start from 1
@@ -156,7 +162,7 @@ def dlsBacktrack(grid, u, goal, path, expanded, l):
 
         # skip invalid moves
         if (v[0] < 1 or v[0] > rows):   continue
-        if (v[1] < 1 or v[1] > cols):   continue
+        if (v[1] < 1 or v[1] > cols):   continue    
         if (grid[v[0]][v[1]] > -1):     continue
         if (v in path):                 continue
 
@@ -177,7 +183,9 @@ def dlsBacktrack(grid, u, goal, path, expanded, l):
 def ids(grid, start, goal, expanded):
     rows, cols = len(grid), len(grid[0])
 
-    for depth in range(heuristic(start, goal), rows * cols):
+    # The shortest possible path has the length of manhattan distance
+    # A slightly improvement is running from manhattan distance
+    for depth in range(manhattan(start, goal), rows * cols):
         path = [start]
         dlsBacktrack(grid, start, goal, path, expanded, depth)
 
@@ -189,8 +197,7 @@ def ids(grid, start, goal, expanded):
 
 
 def heuristic(a, b):
-    # Manhattan distance as a heuristic (suitable for 4-directional movement)
-    return abs(a[0] - b[0]) + abs(a[1] - b[1]) # Manhattan = |dx| + |dy|
+    return manhattan(a, b)
 
 
 def aStar(grid, start, goal, expanded):

@@ -418,27 +418,21 @@ class UCSGhost(Ghost):
 
         # expanded is used for analysis
         expanded = set()
-        path = Pfinder.ucs(tile_map, (self.y, self.x), target, expanded, ghost_list) 
+        path = Pfinder.ucs(tile_map, (self.y, self.x), target, expanded) 
 
         _, memory_peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
         time_end = time.time()
 
         # Orange
-        #print("\033[93m", "\n================= UCS =================", "\033[m")
-        #print("\033[93m", f"Start = {(self.y, self.x, "\033[m")}", "\033[m")
-        #print("\033[93m", f"Goal  = {target}", "\033[m")
-        #print("\033[93m", f"Time usage:        {(time_end - time_start) * 1000:.5f} ms", "\033[m")
-        #print("\033[93m", f"Peak memory usage: {memory_peak} bytes", "\033[m")
-        #print("\033[93m", f"Expanded nodes:    {len(expanded)}", "\033[m")
-
-                # Orange
-        print("\033[93m", "\n================= UCS =================", "\033[0m")
-        print("\033[93m", f"Start = ({self.y}, {self.x})", "\033[0m")
-        print("\033[93m", f"Goal = {target}", "\033[0m")
-        print("\033[93m", f"Time usage: {(time_end - time_start) * 1000:.5f} ms", "\033[0m")
-        print("\033[93m", f"Peak memory usage: {memory_peak} bytes", "\033[0m")
-        print("\033[93m", f"Expanded nodes: {len(expanded)}", "\033[0m")
+        Coloring = ANSI.background(0) + ANSI.color_text(91) + ANSI.style_text(33)
+        
+        print(Coloring + "\n================= UCS =================")
+        print(Coloring + f"Start = {(self.y, self.x)}")
+        print(Coloring + f"Goal  = {target}")
+        print(Coloring + f"Time usage:        {(time_end - time_start) * 1000:.2f} ms")
+        print(Coloring + f"Peak memory usage: {memory_peak} bytes")
+        print(Coloring + f"Expanded nodes:    {len(expanded)}")
 
         if (path is None or len(path) <= 1):
             # keep moving foward if no path was found

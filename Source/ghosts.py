@@ -7,11 +7,11 @@ import random
 import time
 import tracemalloc
 
-# local
+# local imports
 import tile_map as TMap
 import pathfinders as Pfinder 
 
-# map constants
+# Constants
 TILE_RESU = TMap.TILE_RESU
 TILE_SIZE = TMap.TILE_SIZE
 
@@ -34,7 +34,7 @@ opposite_direction = {
     "RIGHT": "LEFT"
 }
 
-# Used for coloring text
+# load color onto the terminal
 class ANSI():
     def background(code):
         return "\33[{code}m".format(code=code)
@@ -69,7 +69,6 @@ def loadGhostFrames(name):
 
 class Ghost:
     def __init__(self, starting_position, direction, name):
-        # private parent class
         if (type(self) == Ghost):
             raise Exception("Ghost is an abstract class and cannot be instantiated directly!")
 
@@ -89,7 +88,7 @@ class Ghost:
         self.scared_time  = 0
         self.chase_time   = 0
 
-        # lock turning
+        # lock turning and lock collision
         self.lock_turn_time = 0
         self.collision_timer = 0
         self.collision_count = 0
@@ -116,6 +115,7 @@ class Ghost:
         self.speed = GHOST_SPEED
         self.snapDisplayToGrid()
 
+    # after pacman dies
     def resetPosition(self, starting_position, direction):
         self.x = starting_position[0]
         self.y = starting_position[1]
@@ -157,8 +157,6 @@ class Ghost:
             return True
         return False
 
-    import random
-
     def preventGhostOverlap(self, ghost_list): 
         COLLISION_RADIUS = 1.5 * self.radius
         if(self.collision_timer > 0):
@@ -176,10 +174,12 @@ class Ghost:
                 self.collision_count += 1
                 collision_detected = True
                 break
-
+        
+        # if current frame does not detect a collision, reset the collision count
         if(not collision_detected): 
             self.collision_count = 0
 
+        # if ghost is colliding with other ghosts more than 5 times (stuck), teleport back to ghost house between 3 possible locations
         if(self.collision_count > 5):
             self.x, self.x = random.choice([(13, 19), (15, 19), (17, 19)])
             self.collision_count = 0
@@ -198,6 +198,7 @@ class Ghost:
 
         return any(not self.checkObstructionDirection(tile_map, direction) for direction in allowed_turns[self.direction])
 
+    # main update function
     def update(self, tile_map, pacman, ghost_list, enable_test):
         if (self.state == "FROZEN"):
             return
@@ -251,6 +252,7 @@ class Ghost:
                     self.y += update_direction[self.direction][3]
                     if self.lock_turn_time > 0: self.lock_turn_time -= 1
 
+        # state timers
         if self.scatter_time > 0: self.scatter_time -= 1
         if self.scared_time > 0: self.scared_time -= 1
         if self.chase_time > 0: self.chase_time -= 1
@@ -269,18 +271,15 @@ class Ghost:
         if (self.scatter_time == 0 and self.state == "SCATTER"):
             self.state = "CHASE"
             self.chase_time = self.MAX_CHASE_TIME
-
         if (self.scared_time == 0 and self.state == "SCARED"):
             self.state = "SCATTER"
             self.scatter_time = int(self.MAX_SCATTER_TIME / 2)
             self.direction = opposite_direction[self.direction]
             self.snapDisplayToGrid()
             self.speed = GHOST_SPEED
-
         if (self.chase_time == 0 and self.state == "CHASE"):
             self.state = "SCATTER"
             self.scatter_time = self.MAX_SCATTER_TIME - 250
-
         if (self.state == "DEAD" and self.x == 15 and self.y == 19):
             self.state = "SCATTER"
             self.scatter_time = self.MAX_SCATTER_TIME
@@ -293,18 +292,17 @@ class Ghost:
             "RIGHT": 3
         }
  
-        if (self.state == "SCARED"): # when scared timer is less than 25% of the max time, blink
-            if (self.scared_time % 25 < 15 and self.scared_time < 0.25 * self.MAX_SCARED_TIME):
+        if (self.state == "SCARED"): 
+            if (self.scared_time % 25 < 15 and self.scared_time < 0.25 * self.MAX_SCARED_TIME): # when scared timer is less than 25% of the max time, flash
                 screen.blit(self.frames[5], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
             else:
                 screen.blit(self.frames[4], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
         elif (self.state == "DEAD"): 
             screen.blit(self.frames[direction_mapping[self.direction] + 6], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
         elif (self.state == "FROZEN"):
-            pass # display nothing
+            pass # display nothing, used when pacman dies
         else:
             screen.blit(self.frames[direction_mapping[self.direction]], (self.display_x - GHOST_RADIUS, self.display_y - GHOST_RADIUS))
-
 
 class BFSGhost(Ghost): 
     def __init__(self, starting_position, direction, name):
@@ -327,6 +325,7 @@ class BFSGhost(Ghost):
         expanded = set()
         path = Pfinder.bfs(tile_map, (self.y, self.x), target, expanded)
 
+        # display analysis
         if(enable_test):
             _, memory_peak = tracemalloc.get_traced_memory()
             tracemalloc.stop()
@@ -353,7 +352,6 @@ class IDSGhost(Ghost):
     def __init__(self, starting_position, direction, name):
         super().__init__(starting_position, direction, name)
     
-    # override with specific behavior
     def getDirection(self, tile_map, pacman, enable_test):  
         target = (0, 0)
 
@@ -371,7 +369,8 @@ class IDSGhost(Ghost):
         # expanded nodes = nodes being used to generate successor nodes
         expanded = set()
         path = Pfinder.ids(tile_map, (self.y, self.x), target, expanded)  
-
+ 
+        # display analysis
         if(enable_test):
             _, memory_peak = tracemalloc.get_traced_memory()
             tracemalloc.stop()
@@ -415,6 +414,7 @@ class UCSGhost(Ghost):
         expanded = set()
         path = Pfinder.ucs(tile_map, (self.y, self.x), target, expanded) 
 
+        # display analysis
         if(enable_test):
             _, memory_peak = tracemalloc.get_traced_memory()
             tracemalloc.stop()
@@ -458,6 +458,7 @@ class AStarGhost(Ghost):
         expanded = set()
         path = Pfinder.aStar(tile_map, (self.y, self.x), target, expanded) 
 
+        # display analysis
         if(enable_test):
             _, memory_peak = tracemalloc.get_traced_memory()
             tracemalloc.stop()

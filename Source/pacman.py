@@ -4,7 +4,7 @@ if __name__ == "__main__":
 
 import pygame
 
-# local
+# local imports
 import tile_map as TMap 
 
 # constants
@@ -34,6 +34,7 @@ opposite_direction = {
     "RIGHT": "LEFT"
 }
 
+# load sfxs and sprites
 def loadPacmanDeathFrames():
     frames = [None for _ in range(11)]
 
@@ -74,12 +75,14 @@ class Pacman:
         self.movement_frames = loadPacmanMovementFrames()
         self.death_frames = loadPacmanDeathFrames()
         
-        # animation
+        # animation constants
         self.MAX_DEATH_FRAMES_DURATION = 12
-        self.death_frames_counter = 0 # used to cycle through death frames
+        self.death_frames_counter = 0
 
         self.MAX_MOVEMENT_FRAMES_DURATION = 5
-        self.movement_frame_counter = 0 # used to cycle through frames
+        self.movement_frame_counter = 0 
+
+        # sound
         self.sound = loadPacmanSound()
         self.sound_index = 0 
         self.stopping_counter = 0
@@ -92,7 +95,7 @@ class Pacman:
         self.MAX_QUEUE_TIME = 3 
         self.queue_time = self.MAX_QUEUE_TIME
 
-        # stuff
+        # movement 
         self.invincible = False
         self.dead = False
         self.lives = 3 # default 3
@@ -110,12 +113,15 @@ class Pacman:
         self.display_x = self.x * TILE_SIZE + SCREEN_OFFSET - self.radius + 3
         self.display_y = self.y * TILE_SIZE + SCREEN_OFFSET - self.radius + 3
 
+    # used after pacman dies
     def resetPosition(self, starting_position, direction):
         self.x = starting_position[0]
         self.y = starting_position[1]
         self.direction = direction
         self.snapDisplayToGrid()
 
+    # check if the square in front of pacman is obstructed
+    # value <= -1 means path / food, value > -1 means wall
     def checkObstructionDirection(self, tile_map, direction):
         if(direction == "NONE"): return False
 
@@ -132,21 +138,24 @@ class Pacman:
             return True
         return False
 
-    def checkCollision(self, tile_map, ghosts : list, starting_positions : list):
+    # check if pacman collides with a ghost
+    def checkCollision(self, tile_map, ghosts, starting_positions):
         COLLISION_RADIUS = 8
 
         for ghost in ghosts:
             if(abs(self.display_x - ghost.display_x) < COLLISION_RADIUS and 
                abs(self.display_y - ghost.display_y) < COLLISION_RADIUS and self.dead == False):
                 if(ghost.state == "DEAD"):
-                    continue
+                    continue 
                 elif ghost.state != "SCARED":
+                    # pacman dies
                     TMap.pauseScreen(400)
                     self.lives -= 1
                     self.sound[1].stop()
                     self.sound[0].play()
                     self.dead = True
                 else:
+                    # pacman eats ghost
                     TMap.pauseScreen(200)
                     self.sound[3].play()
                     tile_map.score += 200
@@ -155,12 +164,14 @@ class Pacman:
                     ghost.direction = opposite_direction[ghost.direction]
                     ghost.snapDisplayToGrid()
         
+        # begin death animation
         if self.dead == True and self.death_frames_counter == 1:
             self.speed = 0
             for ghost in ghosts:
                 ghost.state = "FROZEN"
                 ghost.freeze()
         
+        # reset game state after death animation
         if self.dead == True and self.death_frames_counter == self.MAX_DEATH_FRAMES_DURATION * 10:
             self.resetPosition(starting_positions[0], "NONE")
             self.speed = PACMAN_SPEED
@@ -176,6 +187,8 @@ class Pacman:
             if(self.lives == 0):
                 return True
 
+    # check if pacman can turn
+    # if the cell in front is a wall, pacman can't turn
     def canTurn(self, tile_map, wanted_direction):
         TURN_THRESHOLD = self.radius
         
@@ -209,7 +222,7 @@ class Pacman:
             tile_map.tilemap[self.y][self.x] = -1
             if(value == -2):
                 tile_map.pellet_count -= 1
-            elif (value == -3):
+            elif (value == -3): # if consume a power pellet
                 tile_map.pellet_count -= 1
                 self.sound[4].play()
                 for ghost in ghost_list:
@@ -221,13 +234,14 @@ class Pacman:
             else:
                 self.sound[2].play()
 
+    # main update function
     def update(self, tile_map):
-        # reset queue turn if time runs out
+        # reset queue turn if time runs out, prevent turning too far from the corner
         if(self.queue_time == 0):
             self.queue_turn = "NONE"
             self.queue_time = self.MAX_QUEUE_TIME
 
-        # turn pacman if possible
+        # process turning input
         if(self.canTurn(tile_map, self.queue_turn) == True):
             if(self.direction != "NONE" and self.queue_turn != opposite_direction[self.direction]):
                 self.snapDisplayToGrid()
@@ -252,6 +266,7 @@ class Pacman:
             self.display_x += update_direction[self.direction][0]
             self.display_y += update_direction[self.direction][1]
             
+            # if display cordinates of pacman enter the next cell, update logical cordinates
             if(self.direction == "UP" or self.direction == "DOWN"):
                 if(self.display_y % TILE_SIZE == VERTICAL_OFFSET and self.display_y // TILE_SIZE != self.y):
                     self.x += update_direction[self.direction][2]
@@ -273,6 +288,7 @@ class Pacman:
             self.display_x = SCREEN_OFFSET
             self.x = 0
     
+    # process all animations and sfx
     def render(self, screen, tilemap):
         direction_mapping = {
             "UP": 0,
@@ -291,6 +307,7 @@ class Pacman:
             # Draws open mouth if obstructed
             if(self.checkObstructionDirection(tilemap.tilemap, self.direction) == True):   self.movement_frame_counter = 0
 
+            # draws frame
             screen.blit(self.movement_frames[direction_mapping[self.direction]][frame_index], (self.display_x - PACMAN_RADIUS, self.display_y - PACMAN_RADIUS))
 
             # only increment frame counter if not obstructed
@@ -300,6 +317,7 @@ class Pacman:
             SOUND_INTERVAL = 36
             STOPPING_DELAY = 15
 
+            # sound
             if not self.checkObstructionDirection(tilemap.tilemap, self.direction):
                 self.stopping_counter = 0
                 if self.sound_index == 0:  
@@ -307,6 +325,7 @@ class Pacman:
 
                 self.sound_index += 1
 
+                # play sound every SOUND_INTERVAL frames
                 if self.sound_index >= SOUND_INTERVAL: 
                     self.sound[1].play()
                     self.sound_index = 1  
@@ -317,6 +336,7 @@ class Pacman:
                     self.sound_index = 0  
                     self.stopping_counter = 0
         else:
+            # death animation
             frame_index = (self.death_frames_counter // self.MAX_DEATH_FRAMES_DURATION) % 11
             screen.blit(self.death_frames[frame_index], (self.display_x - PACMAN_RADIUS, self.display_y - PACMAN_RADIUS))
             self.death_frames_counter += 1

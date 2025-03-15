@@ -4,15 +4,16 @@ if __name__ == '__main__':
 
 import pygame
 
+# load some misc decoration
 pygame.display.set_caption("Pacman")
 pygame.display.set_icon(pygame.image.load("Resource\\ghosts\\blinky\\right.png"))
 
+# Constants
 TILE_RESU = 8   # Tile size in .png
 TILE_SIZE = 16  # Tile size to render
 
-# original size 29, 37
-MAP_WIDTH  = 29
-MAP_HEIGHT = 37
+MAP_WIDTH  = 29 # original size 29
+MAP_HEIGHT = 37 # original size 37
 
 SCREEN_OFFSET = 10
 SCREEN_WIDTH  = MAP_WIDTH  * TILE_SIZE
@@ -26,7 +27,6 @@ GHOST_SPEED = 2
 
 FPS = 60
 
-# ghost colors 
 ghost_colors = {
     "blinky": (255, 0, 0),
     "clyde":  (255, 165, 0),
@@ -34,12 +34,12 @@ ghost_colors = {
     "pinky":  (255, 105, 180)
 }
 
-# display game info
+# load fonts
 GAME_FONT_SMALL = pygame.font.Font("Resource\\text_font\\Emulogic-zrEw.ttf", 8)
 GAME_FONT = pygame.font.Font("Resource\\text_font\\Emulogic-zrEw.ttf", 10)
 GAME_FONT_LARGE = pygame.font.Font("Resource\\text_font\\Emulogic-zrEw.ttf", 21)
 
-#load pngs
+#load props pngs
 lives_image = pygame.image.load("Resource\\pacman\\movement_animation\\right\\2.png")
 PROP_BLINKY = pygame.image.load("Resource\\ghosts\\blinky\\right.png")
 PROP_INKY = pygame.image.load("Resource\\ghosts\\inky\\right.png")
@@ -49,6 +49,7 @@ PROP_SCARED_GHOST = pygame.image.load("Resource\\ghosts\\scared.png")
 LETTER_C = pygame.image.load("Resource\\pacman\\movement_animation\\right\\1.png")
 PACMAN_UP = pygame.image.load("Resource\\pacman\\movement_animation\\up\\1.png")
 
+# pause logic for some time, still allow screen update
 def pauseScreen(time):
     start_time = pygame.time.get_ticks()
     while pygame.time.get_ticks() - start_time < time:
@@ -56,13 +57,14 @@ def pauseScreen(time):
             if event.type == pygame.QUIT:
                 return True
 
-# debug mode
+# enable debug mode and resize the screen appropriately
 def enableDebugMode(screen_width):
     screen_width += 300
     #new screen size
     new_screen = pygame.display.set_mode((screen_width + SCREEN_OFFSET * 2, SCREEN_HEIGHT + SCREEN_OFFSET * 2))
     return new_screen, screen_width
 
+# enable test mode and resize the screen appropriately
 def enableTestMode(screen_width):
     screen_width += 500
     #new screen size
@@ -126,6 +128,7 @@ def displayEndCard(screen, win, tile_map):
 
     return end_card_region
 
+# only used in debug mode
 def displayDebugInfo(screen, pacman, ghosts_list):
     STATE_TEXT = GAME_FONT_SMALL.render(". STATE .", True, (255, 255, 255))
     POSITION_TEXT = GAME_FONT_SMALL.render(". POSITION .", True, (255, 255, 255))
@@ -171,6 +174,7 @@ def displayDebugInfo(screen, pacman, ghosts_list):
             GHOST_TIMER_TEXT = GAME_FONT_SMALL.render(str(ghosts_list[i].scared_time), True, (255, 255, 255))
             screen.blit(GHOST_TIMER_TEXT, (SCREEN_OFFSET * 72, SCREEN_OFFSET * (12.8 + i * 2)))
 
+# only used in test mode
 def displayTestScreen(screen):
     TEST_TEXT = GAME_FONT_LARGE.render("... TEST MODE ...", True, (0, 255, 255))
     screen.blit(TEST_TEXT, (SCREEN_OFFSET * 53.5, SCREEN_OFFSET * 2.6))
@@ -212,8 +216,10 @@ def displayTestScreen(screen):
             block += 2
         else:
             block += 1
-        
+
+# important for test mode   
 def setupTestScreen(screen, pacman, ghosts_list, tilemap, clear_map, update_ghosts, update_region, preset, preset_position):
+    # clear map of all food
     if(not clear_map):
         for i in range(MAP_HEIGHT):
             for j in range(MAP_WIDTH):
@@ -221,6 +227,7 @@ def setupTestScreen(screen, pacman, ghosts_list, tilemap, clear_map, update_ghos
                     tilemap.tilemap[i][j] = -1
         clear_map = True
 
+    # place ghosts and pacman in their respective positions of each preset
     ghosts_list[0].x, ghosts_list[0].y = preset_position[preset][1][0], preset_position[preset][1][1] #blinky
     ghosts_list[1].x, ghosts_list[1].y = preset_position[preset][2][0], preset_position[preset][2][1] #inky
     ghosts_list[2].x, ghosts_list[2].y = preset_position[preset][3][0], preset_position[preset][3][1] #pinky
@@ -229,6 +236,7 @@ def setupTestScreen(screen, pacman, ghosts_list, tilemap, clear_map, update_ghos
     pacman.x, pacman.y = preset_position[preset][0][0], preset_position[preset][0][1]
     pacman.snapDisplayToGrid()
 
+    # if any ghost was moving before, stop them
     update_ghosts[0] = False
     update_ghosts[1] = False
     update_ghosts[2] = False
@@ -242,6 +250,7 @@ def setupTestScreen(screen, pacman, ghosts_list, tilemap, clear_map, update_ghos
         5: "UP"
     }
 
+    # set some preset values for the ghosts
     for g in ghosts_list:
         g.direction = preset_direction[preset]
         g.MAX_SCATTER_TIME = 0
@@ -255,6 +264,7 @@ def setupTestScreen(screen, pacman, ghosts_list, tilemap, clear_map, update_ghos
     
     return clear_map, update_ghosts
 
+# hud elements
 def displayGameInfo(screen, pacman, tile_map):
     #display pacman lives
     LIVES_TEXT = GAME_FONT.render("LIVES: ", True, (255, 255, 255))
@@ -270,6 +280,7 @@ def displayGameInfo(screen, pacman, tile_map):
     PELLETS_COUNT = GAME_FONT_SMALL.render(str(tile_map.pellet_count), True, (255, 255, 255))
     screen.blit(PELLETS_COUNT, (SCREEN_OFFSET * 72, SCREEN_OFFSET * 8.8))
 
+# flash between 2 texts
 def flashText(screen, last_toggle_time, show_text, text, text2):
     current_time = pygame.time.get_ticks() 
     if current_time - last_toggle_time >= 400: #switch every 200ms
@@ -285,6 +296,7 @@ def flashText(screen, last_toggle_time, show_text, text, text2):
 
     return last_toggle_time, show_text
 
+# load the bitmap data from "map.txt", used to draw the map and load every food item
 def ReadMap():
     file = open("Resource\\map\\map.txt")
     m = [[0] * MAP_WIDTH]
@@ -327,7 +339,7 @@ class Tilemap:
         for i in range(1, MAP_HEIGHT + 1):
             for j in range(1, MAP_WIDTH + 1):
                 # Empty cell
-                if (self.tilemap[i][j] < 0):
+                if (self.tilemap[i][j] < 0): # load food items
                     match (self.tilemap[i][j]):
                         case -2:
                             screen.blit(self.food_list[0], (SCREEN_OFFSET + (j - 1) * TILE_SIZE, SCREEN_OFFSET + (i - 1) * TILE_SIZE)) #pellet
@@ -343,7 +355,8 @@ class Tilemap:
                             screen.blit(self.food_list[5], (SCREEN_OFFSET + (j - 1) * TILE_SIZE, SCREEN_OFFSET + (i - 1) * TILE_SIZE))
                         case _:
                             continue
-
+                
+                # load map using bitmap data and a sprite sheet
                 y, x = (self.tilemap[i][j] % 10), (self.tilemap[i][j] // 10)
                 src = pygame.Rect(y * TILE_SIZE, x * TILE_SIZE, TILE_SIZE, TILE_SIZE)
 

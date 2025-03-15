@@ -14,7 +14,6 @@ HOUSE = [(19, 14), (19, 15), (19, 16),
         (20, 12), (20, 13), (20, 14), (20, 15), (20, 16), (20, 17), (20, 18),
         (21, 12), (21, 13), (21, 14), (21, 15), (21, 16), (21, 17), (21, 18)]
 
-
 # Tracing back the path from start to goal
 def tracePath(tracer, start, goal):
     u = goal
@@ -26,7 +25,6 @@ def tracePath(tracer, start, goal):
 
     path.reverse()
     return path
-
 
 def bfs(grid, start, goal, expanded):
     # initialize variables
@@ -78,7 +76,6 @@ def bfs(grid, start, goal, expanded):
         return tracePath(tracer, start, goal)
     
     return None
-
 
 def ucs(grid, start, goal, expanded):
     # initialize variables
@@ -137,10 +134,8 @@ def ucs(grid, start, goal, expanded):
     
     return None
 
-
 def manhattan(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
-
 
 def dlsBacktrack(grid, u, goal, path, expanded, l):
     # initialize variables
@@ -179,7 +174,6 @@ def dlsBacktrack(grid, u, goal, path, expanded, l):
         
         path.pop()
 
-
 def ids(grid, start, goal, expanded):
     rows, cols = len(grid), len(grid[0])
 
@@ -195,10 +189,8 @@ def ids(grid, start, goal, expanded):
     
     return None
 
-
 def heuristic(a, b):
     return manhattan(a, b)
-
 
 def aStar(grid, start, goal, expanded):
     # initialize variables
@@ -237,7 +229,6 @@ def aStar(grid, start, goal, expanded):
                 heapq.heappush(open_list, (new_f, new_g, neighbor, new_path))
     
     return None  # no path found
-
 
 def identifyDirection(path): 
     direction = (-path[0][0] + path[1][0], -path[0][1] + path[1][1])

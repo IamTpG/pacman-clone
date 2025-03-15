@@ -1,4 +1,3 @@
-# imports
 import pygame
 
 # initialize pygame
@@ -42,27 +41,25 @@ start = False
 win = False
 quiting = False
 
-# initialize objects
 pacman_starting_position = (15, 28)
 blinky_starting_position = (17, 19)
 clyde_starting_position  = (15, 19)
 inky_starting_position   = (13, 19)
 pinky_starting_position  = (15, 16)
-
 starting_positions = [pacman_starting_position, blinky_starting_position, clyde_starting_position, inky_starting_position, pinky_starting_position]
 
+# initialize objects
 pacman  = pacman_m.Pacman(pacman_starting_position, "NONE")
 inky    = ghosts.BFSGhost(inky_starting_position, "UP", "inky")
 pinky   = ghosts.IDSGhost(pinky_starting_position, "UP", "pinky")
 clyde   = ghosts.UCSGhost(clyde_starting_position, "UP", "clyde")
 blinky  = ghosts.AStarGhost(blinky_starting_position, "UP", "blinky")
-
 ghosts_list = [blinky, inky, pinky, clyde]
 
 # load map
 tilemap = TMap.Tilemap("Resource\\map\\map.png")
 
-#starting sequence
+#starting sequence objects
 READY_TEXT = GAME_FONT.render("READY!", True, (255, 255, 0))
 BLACK_READY_TEXT = GAME_FONT.render("READY!", True, (0, 0, 0))
 intro_sfx = pygame.mixer.Sound("Resource\\sfx\\intro.wav")
@@ -71,27 +68,25 @@ start = True
 enable_intro = True
 
 # pause time
-pause_time = 4500 #milliseconds #original 4500
-pausing = pygame.time.get_ticks() + pause_time
+intro_duration = 4500 #milliseconds #original 4500
+intro_max_duration = pygame.time.get_ticks() + intro_duration
 
-#debug mode
+#debug mode entry
 enable_debug = False #default False
 key_order_dm = [pygame.K_d, pygame.K_e, pygame.K_b, pygame.K_u, pygame.K_g, pygame.K_m, pygame.K_o, pygame.K_d, pygame.K_e] #[debugmode]
 debug_input_queue = []
 
-#test mode
+#test mode entry
 enable_test = False #default False
 key_order_tm = [pygame.K_t, pygame.K_e, pygame.K_s, pygame.K_t, pygame.K_m, pygame.K_o, pygame.K_d, pygame.K_e] #[testmode] 
 test_input_queue = []
 
-#extra codes
+#extra codes 
 enable_invincibility = False #default False
 key_order_invc = [pygame.K_u, pygame.K_n, pygame.K_d, pygame.K_i, pygame.K_e] #[undie]
 invincibility_input_queue = []
 
-#debug
-print("Fix these pngs files bruh")
-
+# main loop
 while (running): 
     for event in pygame.event.get():
         if (event.type == pygame.QUIT):
@@ -103,27 +98,27 @@ while (running):
                 running = False
                 quiting = True
 
+            # acquire input for pacman
             if (event.key in input_mapping and pacman.lock_turn_time == 0 and not pacman.dead):
                 pacman.queue_turn = input_mapping[event.key]
                 pacman.queue_time = pacman.MAX_QUEUE_TIME
 
-    # update pacman
+    # update object logic
     pacman.update(tilemap.tilemap) 
     pacman.eatFood(tilemap, ghosts_list)
-
-    # update ghosts
     blinky.update(tilemap.tilemap, pacman, ghosts_list, enable_test)
     clyde.update(tilemap.tilemap, pacman, ghosts_list, enable_test)
     inky.update(tilemap.tilemap, pacman, ghosts_list, enable_test)
     pinky.update(tilemap.tilemap, pacman, ghosts_list, enable_test)
 
-    # check collision
+    # check collision between pacman and ghosts
     if (enable_invincibility):
         pass
     elif (pacman.checkCollision(tilemap, ghosts_list, starting_positions)):
         win = False
         running = False
 
+    # exit condition
     if (tilemap.pellet_count == 0):
         win = True
         running = False
@@ -136,10 +131,10 @@ while (running):
     pinky.render(screen)
     pacman.render(screen, tilemap)
 
-    # flip() the display to put your work on screen
+    # update screen
     pygame.display.update()
 
-    # fill the screen with a color to wipe away anything from last frame
+    # refresh screen
     if (not start or not enable_intro):
         screen.fill((0, 0, 0), update_region)
 
@@ -155,7 +150,7 @@ while (running):
         intro_sfx.play()
         last_toggle_time = 0
         show_text = True
-        while (pygame.time.get_ticks() < pausing):
+        while (pygame.time.get_ticks() < intro_max_duration):
             last_toggle_time, show_text = TMap.flashText(screen, last_toggle_time, show_text, READY_TEXT, BLACK_READY_TEXT)
             for event in pygame.event.get():
                 if (event.type == pygame.QUIT):
@@ -195,6 +190,7 @@ while (running):
             if (not running):
                 break
 
+        # resize screen for selected modes
         if (enable_debug):
             screen, new_screen_width = TMap.enableDebugMode(SCREEN_WIDTH)
             update_region = pygame.Rect(0, SCREEN_OFFSET * 7, new_screen_width + SCREEN_OFFSET * 2, SCREEN_HEIGHT + SCREEN_OFFSET)
@@ -209,6 +205,7 @@ while (running):
 
     clock.tick(FPS) 
 
+# display test mode
 if (enable_test):
     test_md.test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_list, update_region)
     quiting = True

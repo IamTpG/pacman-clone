@@ -19,7 +19,6 @@ FPS = TMap.FPS
 
 clock = pygame.time.Clock()
 
-# test mode
 next_direction = {
     "UP": "RIGHT",
     "RIGHT": "DOWN",
@@ -27,7 +26,6 @@ next_direction = {
     "LEFT": "UP"
 }
 
-# mapping
 input_mapping = {
     pygame.constants.K_UP: "UP",
     pygame.constants.K_DOWN: "DOWN",
@@ -58,24 +56,23 @@ setup = True
 clear_map = False
 update_blinky, update_clyde, update_inky, update_pinky = False, False, False, False
 update_ghosts = [update_blinky, update_inky, update_pinky, update_clyde]
-dragging_mouse = False
 
-# selection variables
+# input processing variables
 hold_time = 0
 hold_max_time = 200
+dragging_mouse = False
 select_ghost = False
 selected_ghost = None
 
-# update region
+# update region to prevent having to update the whole screen
 update_region2 = pygame.Rect(SCREEN_OFFSET * 50, SCREEN_OFFSET * 40, SCREEN_WIDTH, SCREEN_HEIGHT)
 
-
-# test mode loop
+# main loop for test mode
 def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_list, update_region):
     last_sprite_position = (0, 0, 0, 0)
 
     setup = True
-    preset = 1 # default preset 0
+    preset = 1 # default preset 1
     clear_map = False
     update_ghosts = [False, False, False, False]
 
@@ -85,7 +82,6 @@ def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_l
 
     preset_positions = {
         #pacman, blinky, inky, pinky, clyde
-        # corner 2, 3, 4, 5, 1 is default
         1 : [(15, 28), (2, 34), (10, 34), (20, 34), (28, 34)], # default
         2 : [(28, 34), (2, 6), (2, 6), (2, 6), (2, 6)], # top left to bottom right
         3 : [(28, 6), (2, 34), (2, 34), (2, 34), (2, 34)], # bottom left to top right
@@ -93,7 +89,9 @@ def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_l
         5 : [(15, 34), (15, 19), (15, 19), (15, 19), (15, 19)] # ghost house to bottom middle
     }
     last_sprite_position = (0, 0, 0, 0)
+
     while(True):
+        # setup test mode when entering or when resetting
         if(setup):
             clear_map, update_ghosts = TMap.setupTestScreen(screen, pacman, ghosts_list, tilemap, clear_map, update_ghosts, update_region, preset, preset_positions)
             setup = False
@@ -102,6 +100,8 @@ def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_l
             if (event.type == pygame.QUIT):
                 return
 
+            # switch between test presets
+            # honestly there is a shorter way of making this without 5 if-else but it require more objects and that is too complicated
             advanced_key_press = pygame.key.get_pressed()
             if(advanced_key_press[pygame.K_LSHIFT] and advanced_key_press[pygame.K_1]):
                 setup = True
@@ -123,16 +123,19 @@ def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_l
                 if (event.key == pygame.constants.K_ESCAPE):
                     return
 
+                # acquire input for pacman
                 if (event.key in input_mapping and pacman.lock_turn_time == 0 and not pacman.dead and not select_ghost):
                     pacman.queue_turn = input_mapping[event.key]
                     pacman.queue_time = pacman.MAX_QUEUE_TIME
 
+                # change ghost direction with keyboard using arrow keys
                 if (event.key in input_mapping and select_ghost):
                     selected_ghost.direction = input_mapping[event.key]
                     SELECTED_GHOST_TEXT = GAME_FONT.render("Selected: " + selected_ghost.name + " | Direction: " + selected_ghost.direction, True, ghosts_colors_mapping[selected_ghost.name])
                     screen.fill((0, 0, 0), update_region2)
                     screen.blit(SELECTED_GHOST_TEXT, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 45))
 
+                # move ghost with keyboard using WASD
                 if (event.key in input_mapping_wasd and select_ghost):
                     selected_ghost.x += input_mapping_wasd[event.key][0] 
                     selected_ghost.y += input_mapping_wasd[event.key][1] 
@@ -140,15 +143,19 @@ def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_l
                     screen.fill((0, 0, 0), last_sprite_position)
                     selected_ghost.snapDisplayToGrid()
 
+                # reset current test preset
                 if(event.key == pygame.K_r):
                     setup = True
                     screen.fill((0, 0, 0), update_region2)
                     select_ghost = False
                     selected_ghost = None
+                # clear the screen
                 if(event.key == pygame.K_c):
                     screen.fill((0, 0, 0), update_region)
 
+                # select ghost with keyboard
                 if(event.key in ghosts_mapping and not advanced_key_press[pygame.K_LSHIFT]):
+                    # if the ghost is already selected, begin moving it
                     if(selected_ghost == ghosts_list[ghosts_mapping[event.key]]):
                         update_ghosts[ghosts_mapping[event.key]] = True
                         select_ghost = False
@@ -168,8 +175,8 @@ def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_l
                         if(abs(ghost.display_x - event.pos[0]) < TILE_SIZE * 2 and abs(ghost.display_y - event.pos[1]) < TILE_SIZE * 2):
                             selected_ghost = ghost
                             select_ghost = True
-                if(event.button == 3):
-                    if(select_ghost):
+                if(event.button == 3): 
+                    if(select_ghost): # deselect ghost if click outside a ghost
                         select_ghost = False
                         screen.fill((0, 0, 0), update_region2)
                     else:
@@ -181,12 +188,16 @@ def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_l
                         
             if (event.type == pygame.MOUSEBUTTONUP):
                 if(event.button == 1):
+                    # if hold LMB, drag the object
+                    # if click LMB, update ghosts, does nothing with pacman
                     if(pygame.time.get_ticks() - hold_time < hold_max_time):
                         for i in range(4):
                             if(abs(ghosts_list[i].display_x - event.pos[0]) < TILE_SIZE * 2 and abs(ghosts_list[i].display_y - event.pos[1]) < TILE_SIZE * 2):
                                 update_ghosts[i] = True
+                # if was dragging a ghost, update the screen
                 if(select_ghost or abs(pacman.display_x - event.pos[0]) < TILE_SIZE * 2 and abs(pacman.display_y - event.pos[1]) < TILE_SIZE * 2):
                     screen.fill((0, 0, 0), update_region)
+                # if RMB, change the ghost direction
                 if(event.button == 3 and selected_ghost != None):
                     selected_ghost.direction = next_direction[selected_ghost.direction]
                     screen.fill((0, 0, 0), update_region2)
@@ -196,6 +207,7 @@ def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_l
                 dragging_mouse = False
                 select_ghost = False
 
+            # drag the object
             if(event.type == pygame.MOUSEMOTION and dragging_mouse):
                 if(select_ghost):
                     last_sprite_position = (selected_ghost.x * TILE_SIZE - selected_ghost.radius, selected_ghost.y * TILE_SIZE - selected_ghost.radius, TILE_SIZE * 2, TILE_SIZE * 2)
@@ -217,7 +229,7 @@ def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_l
         if(pacman.direction != "NONE"):
             screen.fill((0, 0, 0), update_region)
 
-        # update ghosts
+        # update ghosts only when prompted
         if(update_ghosts[0]): #blinky
             if(blinky.x == pacman.x and blinky.y == pacman.y):
                 update_ghosts[0] = False
@@ -238,7 +250,7 @@ def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_l
                 update_ghosts[3] = False
             else:
                 clyde.update(tilemap.tilemap, pacman, ghosts_list, True)
-        if(any(update_ghosts)):
+        if(any(update_ghosts)): # if any ghost moved, update a section of the screen storing some text
             screen.fill((0, 0, 0), update_region2)
 
         # render objects
@@ -250,5 +262,4 @@ def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_l
         pinky.render(screen)
 
         pygame.display.update()
-
         clock.tick(FPS)

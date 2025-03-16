@@ -65,7 +65,7 @@ select_ghost = False
 selected_ghost = None
 
 # update region to prevent having to update the whole screen
-update_region2 = pygame.Rect(SCREEN_OFFSET * 50, SCREEN_OFFSET * 40, SCREEN_WIDTH, SCREEN_HEIGHT)
+update_region2 = pygame.Rect(SCREEN_OFFSET * 50, SCREEN_OFFSET * 45, SCREEN_WIDTH, SCREEN_HEIGHT)
 
 # main loop for test mode
 def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_list, update_region):
@@ -201,8 +201,8 @@ def test_mode_loop(screen, tilemap, pacman, blinky, inky, pinky, clyde, ghosts_l
                 if(event.button == 3 and selected_ghost != None):
                     selected_ghost.direction = next_direction[selected_ghost.direction]
                     screen.fill((0, 0, 0), update_region2)
-                    SELECTED_GHOST_TEXT = GAME_FONT.render("Selected: " + selected_ghost.name + " | Direction: " + selected_ghost.direction, True, (255, 255, 0))
-                    screen.blit(SELECTED_GHOST_TEXT, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 40))
+                    SELECTED_GHOST_TEXT = GAME_FONT.render("Selected: " + selected_ghost.name + " | Direction: " + selected_ghost.direction, True, ghosts_colors_mapping[selected_ghost.name])
+                    screen.blit(SELECTED_GHOST_TEXT, (SCREEN_OFFSET * 50, SCREEN_OFFSET * 45))
                 selected_ghost = None
                 dragging_mouse = False
                 select_ghost = False

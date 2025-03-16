@@ -185,34 +185,35 @@ def displayTestScreen(screen):
     dc2 = "Move Pacman with Arrow keys or Mouse Dragging"
     dc3 = "The ghosts will always chase Pacman"
     dc4 = "A ghost will automatically stop when it reaches pacman"
+    dc5 = "A ghost's starting direction is very important"
 
-    dc5 = "Blinky (red) uses A* pathfinding"
-    dc6 = "Inky (cyan) uses BFS pathfinding"
-    dc7 = "Pinky (pink) uses DFS/IDS pathfinding"
-    dc8 = "Clyde (orange) uses UCS pathfinding"
+    dc6 = "Blinky (red) uses A* pathfinding"
+    dc7 = "Inky (cyan) uses BFS pathfinding"
+    dc8 = "Pinky (pink) uses DFS/IDS pathfinding"
+    dc9 = "Clyde (orange) uses UCS pathfinding"
 
-    dc9 =  "            .. Ghost Controls .."
-    dc10 = "                   . Mouse .         . Keyboard ."
-    dc11 = "Selection         :  [NONE]            Number 1-4"
-    dc12 = "Change Direction  :  RMB               Arrow Keys"
-    dc13 = "Move Position     :  Drag LMB          W A S D"
-    dc14 = "Start Update      :  LMB               Number 1-4"
-    dc15 = "Reset ALL Position:  [NONE]            R"
-    dc16 = "Refresh Screen    :  [NONE]            C"
-    dc17 = "Select Preset Test:  [NONE]            LSHIFT + Number 1-5"
+    dc10 = "            .. Ghost Controls .."
+    dc11 = "                   . Mouse .         . Keyboard ."
+    dc12 = "Selection         :  [NONE]            Number 1-4"
+    dc13 = "Change Direction  :  RMB               Arrow Keys"
+    dc14 = "Move Position     :  Drag LMB          W A S D"
+    dc15 = "Start Update      :  LMB               Number 1-4"
+    dc16 = "Reset ALL Position:  [NONE]            R"
+    dc17 = "Refresh Screen    :  [NONE]            C"
+    dc18 = "Select Preset Test:  [NONE]            LSHIFT + Number 1-5"
 
-    description = [dc0, dc1, dc2, dc3, dc4, dc5, dc6, dc7, dc8, dc9, dc10, dc11, dc12, dc13, dc14, dc15, dc16, dc17]
+    description = [dc0, dc1, dc2, dc3, dc4, dc5, dc6, dc7, dc8, dc9, dc10, dc11, dc12, dc13, dc14, dc15, dc16, dc17, dc18]
     block = 2
     for i in range(len(description)):
-        if(i == 9): dc_text = GAME_FONT.render(description[i], True, (0, 255, 255))
-        elif (i == 5): dc_text = GAME_FONT_SMALL.render(description[i], True, (255, 0, 0))
-        elif (i == 6): dc_text = GAME_FONT_SMALL.render(description[i], True, (0, 255, 255))
-        elif (i == 7): dc_text = GAME_FONT_SMALL.render(description[i], True, (255, 105, 180))
-        elif (i == 8): dc_text = GAME_FONT_SMALL.render(description[i], True, (255, 165, 0))
-        elif (i == 10): dc_text = GAME_FONT_SMALL.render(description[i], True, (255, 150, 0))
+        if(i == 10): dc_text = GAME_FONT.render(description[i], True, (0, 255, 255))
+        elif (i == 6): dc_text = GAME_FONT_SMALL.render(description[i], True, (255, 0, 0))
+        elif (i == 7): dc_text = GAME_FONT_SMALL.render(description[i], True, (0, 255, 255))
+        elif (i == 8): dc_text = GAME_FONT_SMALL.render(description[i], True, (255, 105, 180))
+        elif (i == 9): dc_text = GAME_FONT_SMALL.render(description[i], True, (255, 165, 0))
+        elif (i == 11): dc_text = GAME_FONT_SMALL.render(description[i], True, (255, 150, 0))
         else: dc_text = GAME_FONT_SMALL.render(description[i], True, (255, 255, 255))
         screen.blit(dc_text, (SCREEN_OFFSET * 50, SCREEN_OFFSET * (4 + block * 1.5)))
-        if(i == 1 or i == 4 or i == 8 or i == 9):
+        if(i == 1 or i == 5 or i == 9 or i == 10):
             block += 2
         else:
             block += 1
